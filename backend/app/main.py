@@ -8,6 +8,7 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from datetime import datetime
 from sqlalchemy.orm import Session
 from typing import List
 from io import BytesIO
@@ -22,6 +23,8 @@ from app.models.notice import Notice
 from app.agents.notice_agent import process_new_notice
 from app.services.decision_engine import evaluate_student_for_notice
 from app.services.embedding_service import create_embedding
+from app.services.notification_service import route_notice_to_students
+from app.models.notification import Notification
 
 app = FastAPI(
     title="Personalized Notice Intelligence System",
@@ -72,6 +75,8 @@ def read_root():
 @app.post("/api/admin/notice/text")
 async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db)):
 
+    import traceback
+
     if not text.strip():
         raise HTTPException(status_code=400, detail="Notice text cannot be empty.")
 
@@ -82,6 +87,10 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
 
         # Convert Pydantic model → dictionary
         notice_data = structured_data.model_dump()
+        registration_link = notice_data.get("registration_link")
+
+        if registration_link in ["None Provided", "None", "null", ""]:
+            registration_link = None
 
         notice_embedding_text = f"""
         Title: {notice_data["title"]}
@@ -101,9 +110,9 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
             is_mandatory=notice_data["is_mandatory"],
             eligibility=notice_data["eligibility"],
             deadline=notice_data["deadline"],
-            registration_link=notice_data["registration_link"],
-            required_action=notice_data["required_action"],
-            importance=notice_data["importance"],
+            registration_link=registration_link,
+            required_action=notice_data.get("required_action"),
+            importance=notice_data.get("importance", "NORMAL"),
             summary=notice_data["summary"],
             raw_text=text,
             notice_embedding=notice_embedding,
@@ -116,9 +125,11 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
         db.add(notice)
         db.commit()
         db.refresh(notice)
+        notifications = route_notice_to_students(db, notice)
 
         return {
             "message": "Notice processed and saved successfully.",
+            "notification_created": len(notifications),
             "notice": {
                 "id": notice.id,
                 "title": notice.title,
@@ -188,6 +199,11 @@ async def upload_pdf_notice(
 
         notice_data = structured_data.model_dump()
 
+        registration_link = notice_data.get("registration_link")
+
+        if registration_link in ["None Provided", "None", "null", ""]:
+            registration_link = None
+
         notice_embedding_text = f"""
             Title: {notice_data["title"]}
             Category: {notice_data["category"]}
@@ -209,7 +225,7 @@ async def upload_pdf_notice(
             is_mandatory=notice_data["is_mandatory"],
             eligibility=notice_data["eligibility"],
             deadline=notice_data["deadline"],
-            registration_link=notice_data["registration_link"],
+            registration_link=registration_link,
             required_action=notice_data["required_action"],
             importance=notice_data["importance"],
             summary=notice_data["summary"],
@@ -220,9 +236,11 @@ async def upload_pdf_notice(
         db.add(notice)
         db.commit()
         db.refresh(notice)
+        notifications = route_notice_to_students(db, notice)
 
         return {
             "message": "PDF notice processed and saved successfully.",
+            "notifications_created": len(notifications),
             "notice": {
                 "id": notice.id,
                 "title": notice.title,
@@ -409,3 +427,79 @@ def get_personalized_feed(
         "total_relevant_notices": len(personalized_feed),
         "notices": personalized_feed,
     }
+
+
+@app.get("/api/student/{student_id}/notifications")
+def get_notifications(
+    student_id: str,
+    db: Session = Depends(get_db),
+):
+    notifications = (
+        db.query(Notification)
+        .filter(Notification.student_id == student_id)
+        .order_by(Notification.created_at.desc())
+        .all()
+    )
+
+    result = []
+
+    for notification in notifications:
+        notice = db.query(Notice).filter(Notice.id == notification.notice_id).first()
+
+        if not notice:
+            continue
+
+        result.append(
+            {
+                "notification_id": notification.id,
+                "notice_id": notice.id,
+                "title": notice.title,
+                "summary": notice.summary,
+                "category": notice.category,
+                "deadline": notice.deadline,
+                "registration_link": notice.registration_link,
+                "required_action": notice.required_action,
+                "priority": notification.priority,
+                "urgency": notification.urgency,
+                "relevance_score": notification.relevance_score,
+                "reason": notification.reason,
+                "status": notification.status,
+                "created_at": notification.created_at,
+            }
+        )
+
+    return {
+        "student_id": student_id,
+        "total": len(result),
+        "notifications": result,
+    }
+
+
+@app.patch("/api/student/{student_id}/notifications/{notification_id}/read")
+def mark_notification_read(
+    student_id: str,
+    notification_id: str,
+    db: Session = Depends(get_db),
+):
+    notification = (
+        db.query(Notification)
+        .filter(
+            Notification.id == notification_id,
+            Notification.student_id == student_id,
+        )
+        .first()
+    )
+
+    if not notification:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Notification not found.",
+        )
+
+    notification.status = "READ"
+    notification.read_at = datetime.utcnow()
+
+    db.commit()
+
+    return {"message": "Notificatio marked as read."}
