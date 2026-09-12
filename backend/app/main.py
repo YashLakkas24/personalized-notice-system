@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from io import BytesIO
 import uuid
+import pytesseract
+from PIL import Image
 
 from pypdf import PdfReader
 
@@ -21,10 +23,13 @@ from app.models.student import Student
 from app.models.notice import Notice
 
 from app.agents.notice_agent import process_new_notice
-from app.services.decision_engine import evaluate_student_for_notice
 from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notification import Notification
+
+pytesseract.pytesseract.tesseract_cmd = (
+    r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Tesseract-OCR"
+)
 
 app = FastAPI(
     title="Personalized Notice Intelligence System",
@@ -141,7 +146,6 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
                 "required_action": notice.required_action,
                 "importance": notice.importance,
                 "summary": notice.summary,
-                "notice_embedding": notice.notice_embedding,
             },
         }
     except Exception as e:
@@ -183,9 +187,34 @@ async def upload_pdf_notice(
 
         for page in reader.pages:
             page_text = page.extract_text()
+
             if page_text:
                 extracted_text += page_text + "\n"
 
+        # ------------------------------------------
+        # 2B. OCR fallback for scanned PDFs
+        # ------------------------------------------
+
+        if not extracted_text.strip():
+
+            try:
+                from pdf2image import convert_from_bytes
+
+                images = convert_from_bytes(pdf_bytes)
+
+                ocr_text = []
+
+                for image in images:
+                    text = pytesseract.image_to_string(image)
+
+                    if text.strip():
+                        ocr_text.append(text)
+
+                extracted_text = "\n".join(ocr_text)
+            except:
+                raise HTTPException(
+                    status_code=400, detail=f"PDF text extraction/OCR failed: {str(e)}"
+                )
         if not extracted_text.strip():
             raise HTTPException(
                 status_code=400, detail="Could not extract text from the PDF."
@@ -263,6 +292,125 @@ async def upload_pdf_notice(
         db.rollback()
 
         raise HTTPException(status_code=500, detail=f"PDF Processing broken:{str(e)}")
+
+
+@app.post("/api/admin/notice/image")
+async def upload_image_notice(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+        "image/webp",
+    }
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG, PNG, JPEG and WEBP images are supported.",
+        )
+
+    try:
+        # ------------------------------------------
+        # 1. Read image
+        # ------------------------------------------
+
+        image_bytes = await file.read()
+
+        image = Image.open(BytesIO(image_bytes))
+
+        # ------------------------------------------
+        # 2. OCR
+        # ------------------------------------------
+
+        extracted_text = pytesseract.image_to_string(image)
+
+        if not extracted_text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from the image.",
+            )
+
+        # ------------------------------------------
+        # 3. AI processing
+        # ------------------------------------------
+
+        structured_data = process_new_notice(extracted_text)
+
+        notice_data = structured_data.model_dump()
+
+        registration_link = notice_data.get("registration_link")
+
+        if registration_link in ["None Provided", "None", "null", ""]:
+            registration_link = None
+
+        # ------------------------------------------
+        # 4. Embedding
+        # ------------------------------------------
+
+        notice_embedding_text = f"""
+            Title: {notice_data["title"]}
+            Category: {notice_data["category"]}
+            Summary: {notice_data["summary"]}
+            Required action: {notice_data["required_action"]}
+            Eligibility: {notice_data["eligibility"]}
+        """
+
+        notice_embedding = create_embedding(notice_embedding_text)
+
+        # ------------------------------------------
+        # 5. Save
+        # ------------------------------------------
+
+        notice = Notice(
+            id=str(uuid.uuid4()),
+            title=notice_data["title"],
+            category=notice_data["category"],
+            is_mandatory=notice_data["is_mandatory"],
+            eligibility=notice_data["eligibility"],
+            deadline=notice_data["deadline"],
+            registration_link=registration_link,
+            required_action=notice_data["required_action"],
+            importance=notice_data["importance"],
+            summary=notice_data["summary"],
+            raw_text=extracted_text,
+            notice_embedding=notice_embedding,
+        )
+
+        db.add(notice)
+        db.commit()
+        db.refresh(notice)
+
+        # ------------------------------------------
+        # 6. Automatic routing
+        # ------------------------------------------
+
+        notifications = route_notice_to_students(db, notice)
+
+        return {
+            "message": "Image notice processed successfully.",
+            "notifications_created": len(notifications),
+            "notice": {
+                "id": notice.id,
+                "title": notice.title,
+                "category": notice.category,
+                "deadline": notice.deadline,
+                "importance": notice.importance,
+                "summary": notice.summary,
+            },
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500, detail=f"Image processing failed: {str(e)}",
+        )
 
 
 # ============================================================

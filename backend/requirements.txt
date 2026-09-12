@@ -11,3 +11,6 @@ sqlalchemy
 psycopg2-binary
 pgvector
 numpy
+pytesseract
+Pillow
+pdf2image
