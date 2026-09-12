@@ -9,11 +9,11 @@ export default function App() {
   const [noticeText, setNoticeText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_BASE = "http://128.0.0";
+  const API_BASE = "http://127.0.0.1:8000";
 
   // Fetch demo students on mount
   useEffect(() => {
-    fetch(`${API_BASE}/students`)
+    fetch(`${API_BASE}/api/students`)
       .then((res) => res.json())
       .then((data) => {
         setStudents(data);
@@ -24,17 +24,8 @@ export default function App() {
 
   // Fetch personalized feed whenever the active student changes
   useEffect(() => {
-    if (!selectedStudentId) return;
-    fetch(`${API_BASE}/student/${selectedStudentId}/feed`)
-      .then((res) => res.json())
-      .then((data) => {
-        setFeed(data);
-      })
-      .catch((err) => {
-        console.error("Error loading feed matrix:", err);
-      });
+    loadNotifications(selectedStudentId);
   }, [selectedStudentId]);
-
   // Handle Form Submission (Text-based Notice Ingestion)
   const handleTextSubmit = async (e) => {
     e.preventDefault();
@@ -45,17 +36,34 @@ export default function App() {
     formData.append("text", noticeText);
 
     try {
-      const response = await fetch(`${API_BASE}/admin/notice/text`, {
+      const response = await fetch(`${API_BASE}/api/admin/notice/text`, {
         method: "POST",
         body: formData,
       });
       if (response.ok) {
         alert("Notice successfully processed and dispatched by Strands Agent!");
         setNoticeText("");
+        await loadNotifications(selectedStudentId);
         // Trigger re-fetch of current student's feed
-        const currentStudent = selectedStudentId;
-        setSelectedStudentId("");
-        setSelectedStudentId(currentStudent);
+        const loadNotifications = async (studentId) => {
+          if (!studentId) return;
+
+          try {
+            const response = await fetch(
+              `${API_BASE}/api/student/${studentId}/notifications`,
+            );
+
+            if (!response.ok) {
+              throw new Error("Failed to load notifications");
+            }
+
+            const data = await response.json();
+            setFeed(data.notifications || []);
+          } catch (err) {
+            console.error("Error loading notifications:", err);
+            setFeed([]);
+          }
+        };
       } else {
         alert("Agent routing error encountered.");
       }
@@ -64,20 +72,6 @@ export default function App() {
       alert("Failed to reach server.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Helper colors for visual anchors matching routing strategies
-  const getBadgeStyle = (routing) => {
-    switch (routing) {
-      case "MUST_NOTIFY":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "HIGHLY_RELEVANT":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "MAYBE_RELEVANT":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -179,6 +173,7 @@ export default function App() {
           <div className="space-y-4">
             <h3 className="text-base font-bold text-gray-800 flex items-center justify-between">
               <span>📭 Personalized Intelligence Feed</span>
+
               <span className="text-xs font-normal text-gray-500">
                 Showing {feed.length} matched entries
               </span>
@@ -186,55 +181,107 @@ export default function App() {
 
             {feed.length === 0 ? (
               <div className="text-center py-12 text-sm text-gray-500 bg-white rounded-xl border border-dashed border-gray-300 px-6">
-                No matching opportunities found for this profile criteria.
-                Broadcast notices are either suppressed or irrelevant to your
-                discipline.
+                No matching opportunities found for this profile.
               </div>
             ) : (
               <div className="space-y-3">
                 {feed.map((item) => (
                   <div
-                    key={item.id}
+                    key={item.notification_id}
                     className={`bg-white p-5 rounded-xl border shadow-sm transition-all relative ${
-                      item.is_mandatory
+                      item.priority === "CRITICAL"
                         ? "border-l-4 border-l-red-500 border-gray-200"
-                        : "border-gray-200"
+                        : item.priority === "HIGH"
+                          ? "border-l-4 border-l-orange-400 border-gray-200"
+                          : "border-gray-200"
                     }`}
                   >
-                    {/* Notice Routing Metadata Badges */}
+                    {/* Priority */}
                     <div className="absolute top-4 right-4 flex items-center gap-2">
                       <span
-                        className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded border uppercase ${getBadgeStyle(item.match_metrics.routing)}`}
+                        className={`text-[10px] font-bold tracking-wider px-2 py-0.5 rounded border uppercase ${
+                          item.priority === "CRITICAL"
+                            ? "bg-red-100 text-red-800 border-red-200"
+                            : item.priority === "HIGH"
+                              ? "bg-orange-100 text-orange-800 border-orange-200"
+                              : "bg-blue-100 text-blue-800 border-blue-200"
+                        }`}
                       >
-                        {item.match_metrics.routing.replace("_", " ")}
+                        {item.priority}
                       </span>
+
                       <span className="text-xs font-mono font-bold bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded text-gray-700">
-                        Score: {item.match_metrics.score}
+                        {Number(item.relevance_score).toFixed(2)}
                       </span>
                     </div>
 
-                    {/* Content Section */}
+                    {/* Content */}
                     <div className="pr-32">
                       <span className="inline-block text-[11px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded mb-1.5">
                         {item.category}
                       </span>
+
                       <h4 className="font-bold text-gray-900 text-sm leading-snug">
                         {item.title}
                       </h4>
+
                       <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
                         {item.summary}
                       </p>
                     </div>
 
-                    {/* Contextual Footer Data Points */}
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
-                      <div>
+                    {/* Why this notice */}
+                    <div className="mt-4 bg-gray-50 border border-gray-100 rounded-lg p-3">
+                      <p className="text-[11px] font-bold text-gray-700 mb-1">
+                        💡 Why you're seeing this
+                      </p>
+
+                      <p className="text-xs text-gray-600">{item.reason}</p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-xs">
+                      <div className="text-gray-500">
                         🗓️ Deadline:{" "}
                         <span className="font-medium text-gray-700">
-                          {item.deadline}
+                          {item.deadline || "Not specified"}
                         </span>
                       </div>
+
+                      <div>
+                        {item.urgency === "URGENT" && (
+                          <span className="font-bold text-red-600">
+                            ⚠️ Act now
+                          </span>
+                        )}
+
+                        {item.urgency === "SOON" && (
+                          <span className="font-semibold text-orange-600">
+                            ⏳ Due soon
+                          </span>
+                        )}
+
+                        {item.urgency === "NORMAL" && (
+                          <span className="text-gray-500">
+                            No immediate action
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Action */}
+                    {item.registration_link && (
+                      <div className="mt-4">
+                        <a
+                          href={item.registration_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition"
+                        >
+                          {item.required_action || "Take Action"} →
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
