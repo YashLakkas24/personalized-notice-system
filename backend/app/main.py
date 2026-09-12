@@ -130,6 +130,7 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
                 "required_action": notice.required_action,
                 "importance": notice.importance,
                 "summary": notice.summary,
+                "notice_embedding": notice.notice_embedding,
             },
         }
     except Exception as e:
@@ -169,7 +170,7 @@ async def upload_pdf_notice(
 
         extracted_text = ""
 
-        for page in reader.pages():
+        for page in reader.pages:
             page_text = page.extract_text()
             if page_text:
                 extracted_text += page_text + "\n"
@@ -291,18 +292,17 @@ def create_student(
 
 @app.get("/api/students")
 def get_students(
-    student_id: str,
     db: Session = Depends(get_db),
 ):
-    student = db.query(Student).filter(Student.id == student_id).first()
+    students = db.query(Student).order_by(Student.name).all()
 
-    if not student:
+    if not students:
         raise HTTPException(
             status_code=404,
             detail="Student profile not found.",
         )
 
-    return student
+    return students
 
 
 # ============================================================
@@ -332,6 +332,7 @@ def get_personalized_feed(
         "year": student_record.year,
         "branch": student_record.branch,
         "interests": student_record.interests or [],
+        "interest_embedding": student_record.interest_embedding,
     }
 
     # ------------------------------------------
@@ -370,7 +371,7 @@ def get_personalized_feed(
         # Suppressed notices aren't shown
         # --------------------------------------
 
-        if evaluation["routing"] == "SUPPRESSED":
+        if evaluation["routing"] == "SUPPRESS":
             continue
 
         personalized_feed.append(

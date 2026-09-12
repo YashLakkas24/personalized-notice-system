@@ -1,96 +1,101 @@
-from app.services.embedding_service import cosine_similarity
-
-# ============================================================
-# RELEVANCE THRESHOLDS
-# ============================================================
-
-
-HIGH_RELEVANCE = 0.75
-MEDIUM_RELEVANCE = 0.55
-
-
-# ============================================================
-# ELIGIBILITY
-# ============================================================
-
-
-
-
 from typing import Dict, Any
 
 from app.services.eligibility_engine import check_eligibility
-from app.services.relevance_engine import calculate_relevance
+from app.services.embedding_service import cosine_similarity
+
+HIGH_RELEVANCE = 0.75
+MEDIUM_RELEVANCE = 0.55
 
 
 def evaluate_student_for_notice(
     student: Dict[str, Any], notice: Dict[str, Any]
 ) -> Dict[str, Any]:
 
-    # --------------------------------
-    # STEP 1 — Eligibility
-    # --------------------------------
+    # ========================================================
+    # STEP 1 — ELIGIBILITY
+    # ========================================================
 
     eligibility = check_eligibility(student, notice)
 
     if not eligibility["eligible"]:
+
         return {
             "routing": "SUPPRESS",
             "eligible": False,
+            "relevance_score": 0.0,
             "relevance_level": "NONE",
             "reason": "Student is not eligible.",
             "eligibility": eligibility,
-            "relevance": None,
         }
 
-    # --------------------------------
-    # STEP 2 — Mandatory notice
-    # --------------------------------
+    # ========================================================
+    # STEP 2 — MANDATORY
+    # ========================================================
 
     if notice.get("is_mandatory", False):
+
         return {
             "routing": "MUST_NOTIFY",
             "eligible": True,
             "relevance_score": 1.0,
             "relevance_level": "MANDATORY",
-            "reason": "This is a mandatory notice for the student.",
+            "reason": "Mandatory notice for this eligible student.",
             "eligibility": eligibility,
-            "relevance": None,
         }
 
-    # --------------------------------
-    # STEP 3 — Interest relevance
-    # --------------------------------
+    # ========================================================
+    # STEP 3 — SEMANTIC MATCHING
+    # ========================================================
 
-    relevance = calculate_relevance(student, notice)
+    student_embedding = student.get("interest_embedding")
 
-    score = relevance["score"]
+    notice_embedding = notice.get("notice_embedding")
 
-    # --------------------------------
-    # STEP 4 — Final routing
-    # --------------------------------
+    if not student_embedding or not notice_embedding:
 
-    if score >= 0.7:
-        routing = "HIGHLY_RELEVANT"
-        reason = "Strong match with student's interests."
+        return {
+            "routing": "SUPPRESS",
+            "eligible": True,
+            "relevance_score": 0.0,
+            "relevance_level": "NONE",
+            "reason": "Embeddings unavailable.",
+            "eligibility": eligibility,
+        }
 
-    elif score >= 0.4:
-        routing = "RELEVANT"
-        reason = "Notice matches some of the student's interests."
+    score = cosine_similarity(student_embedding, notice_embedding)
 
-    elif score > 0:
-        routing = "LOW_PRIORITY"
-        reason = "Weak interest match."
+    score = max(0.0, min(1.0, score))
+
+    # ========================================================
+    # STEP 4 — RELEVANCE LEVEL
+    # ========================================================
+
+    if score >= HIGH_RELEVANCE:
+
+        level = "HIGH"
+        routing = "NOTIFY"
+
+        reason = "Strong semantic match with the student's interests."
+
+    elif score >= MEDIUM_RELEVANCE:
+
+        level = "MEDIUM"
+        routing = "NOTIFY"
+
+        reason = "Moderate semantic match with the student's interests."
 
     else:
+
+        level = "LOW"
         routing = "SUPPRESS"
-        reason = "No meaningful interest match."
+
+        reason = "The notice has low semantic relevance to the student."
 
     return {
         "routing": routing,
         "eligible": True,
-        "relevance_score": score,
-        "relevance_level": relevance["level"],
+        "relevance_score": round(score, 4),
+        "relevance_level": level,
         "reason": reason,
         "eligibility": eligibility,
-        "relevance": relevance,
     }
