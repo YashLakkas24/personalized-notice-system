@@ -7,3 +7,7 @@ pypdf==4.1.0
 strands-agents[openai]
 strands-agents-tools
 openai>=2.0.0
+sqlalchemy
+psycopg2-binary
+pgvector
+numpy

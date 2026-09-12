@@ -1,3 +1,21 @@
+from app.services.embedding_service import cosine_similarity
+
+# ============================================================
+# RELEVANCE THRESHOLDS
+# ============================================================
+
+
+HIGH_RELEVANCE = 0.75
+MEDIUM_RELEVANCE = 0.55
+
+
+# ============================================================
+# ELIGIBILITY
+# ============================================================
+
+
+
+
 from typing import Dict, Any
 
 from app.services.eligibility_engine import check_eligibility
