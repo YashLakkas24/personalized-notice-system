@@ -25,6 +25,9 @@ from app.services.decision_engine import evaluate_student_for_notice
 from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notification import Notification
+from app.models.notification import Notification
+
+from app.services.notification_service import route_notice_to_students
 
 app = FastAPI(
     title="Personalized Notice Intelligence System",
