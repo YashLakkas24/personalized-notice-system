@@ -360,6 +360,7 @@ def get_personalized_feed(
             "required_action": notice_record.required_action,
             "importance": notice_record.importance,
             "summary": notice_record.summary,
+            "notice_embedding": notice_record.notice_embedding,
         }
 
         evaluation = evaluate_student_for_notice(
@@ -381,6 +382,9 @@ def get_personalized_feed(
                     "score": evaluation["relevance_score"],
                     "level": evaluation["relevance_level"],
                     "routing": evaluation["routing"],
+                    "priority": evaluation["priority"],
+                    "urgency": evaluation["urgency"],
+                    "days_left": evaluation["days_left"],
                     "reason": evaluation["reason"],
                 },
             }

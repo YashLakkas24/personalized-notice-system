@@ -2,17 +2,21 @@ from typing import Dict, Any
 
 from app.services.eligibility_engine import check_eligibility
 from app.services.embedding_service import cosine_similarity
+from app.services.priority_engine import calculate_priority
 
 HIGH_RELEVANCE = 0.75
 MEDIUM_RELEVANCE = 0.55
 
 
 def evaluate_student_for_notice(
-    student: Dict[str, Any], notice: Dict[str, Any]
+    student: Dict[str, Any],
+    notice: Dict[str, Any],
 ) -> Dict[str, Any]:
 
+    priority = calculate_priority(notice)
+
     # ========================================================
-    # STEP 1 — ELIGIBILITY
+    # 1. ELIGIBILITY
     # ========================================================
 
     eligibility = check_eligibility(student, notice)
@@ -26,10 +30,27 @@ def evaluate_student_for_notice(
             "relevance_level": "NONE",
             "reason": "Student is not eligible.",
             "eligibility": eligibility,
+            **priority,
         }
 
     # ========================================================
-    # STEP 2 — MANDATORY
+    # 2. EXPIRED
+    # ========================================================
+
+    if priority["priority"] == "EXPIRED":
+
+        return {
+            "routing": "SUPPRESS",
+            "eligible": True,
+            "relevance_score": 0.0,
+            "relevance_level": "EXPIRED",
+            "reason": "Notice deadline has passed.",
+            "eligibility": eligibility,
+            **priority,
+        }
+
+    # ========================================================
+    # 3. MANDATORY
     # ========================================================
 
     if notice.get("is_mandatory", False):
@@ -39,12 +60,13 @@ def evaluate_student_for_notice(
             "eligible": True,
             "relevance_score": 1.0,
             "relevance_level": "MANDATORY",
-            "reason": "Mandatory notice for this eligible student.",
+            "reason": ("Mandatory notice for this eligible student."),
             "eligibility": eligibility,
+            **priority,
         }
 
     # ========================================================
-    # STEP 3 — SEMANTIC MATCHING
+    # 4. SEMANTIC MATCHING
     # ========================================================
 
     student_embedding = student.get("interest_embedding")
@@ -60,6 +82,7 @@ def evaluate_student_for_notice(
             "relevance_level": "NONE",
             "reason": "Embeddings unavailable.",
             "eligibility": eligibility,
+            **priority,
         }
 
     score = cosine_similarity(student_embedding, notice_embedding)
@@ -67,7 +90,7 @@ def evaluate_student_for_notice(
     score = max(0.0, min(1.0, score))
 
     # ========================================================
-    # STEP 4 — RELEVANCE LEVEL
+    # 5. RELEVANCE
     # ========================================================
 
     if score >= HIGH_RELEVANCE:
@@ -75,21 +98,21 @@ def evaluate_student_for_notice(
         level = "HIGH"
         routing = "NOTIFY"
 
-        reason = "Strong semantic match with the student's interests."
+        reason = "Strong semantic match with " "the student's interests."
 
     elif score >= MEDIUM_RELEVANCE:
 
         level = "MEDIUM"
         routing = "NOTIFY"
 
-        reason = "Moderate semantic match with the student's interests."
+        reason = "Moderate semantic match with " "the student's interests."
 
     else:
 
         level = "LOW"
         routing = "SUPPRESS"
 
-        reason = "The notice has low semantic relevance to the student."
+        reason = "The notice has low semantic " "relevance to the student."
 
     return {
         "routing": routing,
@@ -98,4 +121,5 @@ def evaluate_student_for_notice(
         "relevance_level": level,
         "reason": reason,
         "eligibility": eligibility,
+        **priority,
     }
