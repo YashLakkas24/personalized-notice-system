@@ -75,6 +75,7 @@ def route_notice_to_students(
             relevance_score=evaluation["relevance_score"],
             priority=evaluation["priority"],
             urgency=evaluation["urgency"],
+            days_left=evaluation["days_left"],
             reason=evaluation["reason"],
             status="UNREAD",
         )

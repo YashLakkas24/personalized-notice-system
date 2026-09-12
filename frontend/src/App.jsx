@@ -10,7 +10,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   const API_BASE = "http://127.0.0.1:8000";
-  
+
   const loadNotifications = async (studentId) => {
     if (!studentId) return;
 
@@ -64,26 +64,6 @@ export default function App() {
         alert("Notice successfully processed and dispatched by Strands Agent!");
         setNoticeText("");
         await loadNotifications(selectedStudentId);
-        // Trigger re-fetch of current student's feed
-        const loadNotifications = async (studentId) => {
-          if (!studentId) return;
-
-          try {
-            const response = await fetch(
-              `${API_BASE}/api/student/${studentId}/notifications`,
-            );
-
-            if (!response.ok) {
-              throw new Error("Failed to load notifications");
-            }
-
-            const data = await response.json();
-            setFeed(data.notifications || []);
-          } catch (err) {
-            console.error("Error loading notifications:", err);
-            setFeed([]);
-          }
-        };
       } else {
         alert("Agent routing error encountered.");
       }

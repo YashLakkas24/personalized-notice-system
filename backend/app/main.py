@@ -26,8 +26,6 @@ from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notification import Notification
 
-from app.services.notification_service import route_notice_to_students
-
 app = FastAPI(
     title="Personalized Notice Intelligence System",
     description="AI-powered personalized college notice platform",
@@ -131,7 +129,7 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
 
         return {
             "message": "Notice processed and saved successfully.",
-            "notification_created": len(notifications),
+            "notifications_created": len(notifications),
             "notice": {
                 "id": notice.id,
                 "title": notice.title,
@@ -328,107 +326,6 @@ def get_students(
 # ============================================================
 # STUDENT PERSONALIZED FEED
 # ============================================================
-
-
-@app.get("/api/student/{student_id}/notifications")
-def get_personalized_feed(
-    student_id: str,
-    db: Session = Depends(get_db),
-):
-
-    # Find student
-    student_record = db.query(Student).filter(Student.id == student_id).first()
-    if not student_record:
-        raise HTTPException(status_code=404, detail="Student profile not found.")
-
-    personalized_feed = []
-
-    # ------------------------------------------
-    # 2. Convert DB model → dictionary
-    # ------------------------------------------
-    student = {
-        "id": student_record.id,
-        "name": student_record.name,
-        "year": student_record.year,
-        "branch": student_record.branch,
-        "interests": student_record.interests or [],
-        "interest_embedding": student_record.interest_embedding,
-    }
-
-    # ------------------------------------------
-    # 3. Retrieve notices
-    # ------------------------------------------
-
-    notices = db.query(Notice).order_by(Notice.created_at.desc()).all()
-
-    personalized_feed = []
-
-    # ------------------------------------------
-    # 4. Evaluate every notice
-    # ------------------------------------------
-
-    for notice_record in notices:
-
-        notice = {
-            "id": notice_record.id,
-            "title": notice_record.title,
-            "category": notice_record.category,
-            "is_mandatory": notice_record.is_mandatory,
-            "eligibility": notice_record.eligibility or {},
-            "deadline": notice_record.deadline,
-            "registration_link": notice_record.registration_link,
-            "required_action": notice_record.required_action,
-            "importance": notice_record.importance,
-            "summary": notice_record.summary,
-            "notice_embedding": notice_record.notice_embedding,
-        }
-
-        evaluation = evaluate_student_for_notice(
-            student,
-            notice,
-        )
-
-        # --------------------------------------
-        # Suppressed notices aren't shown
-        # --------------------------------------
-
-        if evaluation["routing"] == "SUPPRESS":
-            continue
-
-        personalized_feed.append(
-            {
-                **notice,
-                "match_metrics": {
-                    "score": evaluation["relevance_score"],
-                    "level": evaluation["relevance_level"],
-                    "routing": evaluation["routing"],
-                    "priority": evaluation["priority"],
-                    "urgency": evaluation["urgency"],
-                    "days_left": evaluation["days_left"],
-                    "reason": evaluation["reason"],
-                },
-            }
-        )
-
-        # ------------------------------------------
-        # 5. Sort personalized feed
-        # ------------------------------------------
-
-    personalized_feed.sort(
-        key=lambda x: (
-            not x["is_mandatory"],
-            -x["match_metrics"]["score"],
-        )
-    )
-
-    return {
-        "student": {
-            "id": student["id"],
-            "name": student["name"],
-        },
-        "total_relevant_notices": len(personalized_feed),
-        "notices": personalized_feed,
-    }
 
 
 @app.get("/api/student/{student_id}/notifications")
