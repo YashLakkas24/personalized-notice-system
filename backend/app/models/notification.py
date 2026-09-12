@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Integer,
     String,
     Text,
 )
@@ -29,6 +30,8 @@ class Notification(Base):
     urgency = Column(String, nullable=False, default="NORMAL")
 
     reason = Column(Text, nullable=True)
+
+    days_left = Column(Integer, nullable=True)
 
     status = Column(String, nullable=False, default="UNREAD")
 

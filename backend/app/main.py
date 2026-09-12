@@ -25,7 +25,6 @@ from app.services.decision_engine import evaluate_student_for_notice
 from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notification import Notification
-from app.models.notification import Notification
 
 from app.services.notification_service import route_notice_to_students
 
@@ -331,7 +330,7 @@ def get_students(
 # ============================================================
 
 
-@app.get("/api/student/{student_id}/feed")
+@app.get("/api/student/{student_id}/notifications")
 def get_personalized_feed(
     student_id: str,
     db: Session = Depends(get_db),
@@ -464,6 +463,7 @@ def get_notifications(
                 "required_action": notice.required_action,
                 "priority": notification.priority,
                 "urgency": notification.urgency,
+                "days_left": notification.days_left,
                 "relevance_score": notification.relevance_score,
                 "reason": notification.reason,
                 "status": notification.status,

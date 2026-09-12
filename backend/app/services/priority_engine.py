@@ -20,7 +20,7 @@ def calculate_priority(notice: dict) -> dict:
                 deadline_date = deadline
             else:
                 deadline_date = date.fromisoformat(str(deadline)[:10])
-                days_left = (deadline_date - date.today()).days
+            days_left = (deadline_date - date.today()).days
 
         except (ValueError, TypeError):
 
