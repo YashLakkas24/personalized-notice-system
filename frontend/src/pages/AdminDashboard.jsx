@@ -2,7 +2,7 @@ import { useState } from "react";
 import { uploadNoticeBatch } from "../api/notifications";
 
 export default function AdminDashboard() {
-  const [files, setFiles] = useState(null);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");

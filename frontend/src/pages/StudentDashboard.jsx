@@ -6,9 +6,8 @@ import {
 } from "../api/notifications";
 import "./StudentDashboard.css";
 
-export default function StudentDashboard() {
-  const studentId = "student_1";
-
+export default function StudentDashboard({ studentId }) {
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

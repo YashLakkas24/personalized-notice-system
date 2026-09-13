@@ -1,7 +1,7 @@
 const API_BASE = "http://127.0.0.1:8000";
 
 export async function getAllNotices() {
-  const response = await fetch(`{API_BASE}/api/notices`);
+  const response = await fetch(`${API_BASE}/api/notices`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch notices");
