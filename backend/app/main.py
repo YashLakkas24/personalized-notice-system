@@ -26,6 +26,7 @@ from app.agents.notice_agent import process_new_notice
 from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notification import Notification
+from app.services.notice_workflow import process_notice_workflow
 
 pytesseract.pytesseract.tesseract_cmd = (
     r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Tesseract-OCR"
@@ -87,50 +88,7 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
 
     try:
 
-        # AI extraction
-        structured_data = process_new_notice(text)
-
-        # Convert Pydantic model → dictionary
-        notice_data = structured_data.model_dump()
-        registration_link = notice_data.get("registration_link")
-
-        if registration_link in ["None Provided", "None", "null", ""]:
-            registration_link = None
-
-        notice_embedding_text = f"""
-        Title: {notice_data["title"]}
-        Category: {notice_data["category"]}
-        Summary: {notice_data["summary"]}
-        Required action: {notice_data["required_action"]}
-        Eligibility: {notice_data["eligibility"]}
-        """
-
-        notice_embedding = create_embedding(notice_embedding_text)
-
-        # Add system fields
-        notice = Notice(
-            id=str(uuid.uuid4()),
-            title=notice_data["title"],
-            category=notice_data["category"],
-            is_mandatory=notice_data["is_mandatory"],
-            eligibility=notice_data["eligibility"],
-            deadline=notice_data["deadline"],
-            registration_link=registration_link,
-            required_action=notice_data.get("required_action"),
-            importance=notice_data.get("importance", "NORMAL"),
-            summary=notice_data["summary"],
-            raw_text=text,
-            notice_embedding=notice_embedding,
-        )
-
-        # ------------------------------------------
-        # 4. Save to PostgreSQL
-        # ------------------------------------------
-
-        db.add(notice)
-        db.commit()
-        db.refresh(notice)
-        notifications = route_notice_to_students(db, notice)
+        notice, notifications = process_new_notice(db=db, raw_text=text)
 
         return {
             "message": "Notice processed and saved successfully.",
@@ -211,7 +169,7 @@ async def upload_pdf_notice(
                         ocr_text.append(text)
 
                 extracted_text = "\n".join(ocr_text)
-            except:
+            except Exception as e:
                 raise HTTPException(
                     status_code=400, detail=f"PDF text extraction/OCR failed: {str(e)}"
                 )
@@ -224,48 +182,7 @@ async def upload_pdf_notice(
         # 3. AI processing
         # ------------------------------------------
 
-        structured_data = process_new_notice(extracted_text)
-
-        notice_data = structured_data.model_dump()
-
-        registration_link = notice_data.get("registration_link")
-
-        if registration_link in ["None Provided", "None", "null", ""]:
-            registration_link = None
-
-        notice_embedding_text = f"""
-            Title: {notice_data["title"]}
-            Category: {notice_data["category"]}
-            Summary: {notice_data["summary"]}
-            Required action: {notice_data["required_action"]}
-            Eligibility: {notice_data["eligibility"]}
-        """
-
-        notice_embedding = create_embedding(notice_embedding_text)
-
-        # ------------------------------------------
-        # 4. Save to PostgreSQL
-        # ------------------------------------------
-
-        notice = Notice(
-            id=str(uuid.uuid4()),
-            title=notice_data["title"],
-            category=notice_data["category"],
-            is_mandatory=notice_data["is_mandatory"],
-            eligibility=notice_data["eligibility"],
-            deadline=notice_data["deadline"],
-            registration_link=registration_link,
-            required_action=notice_data["required_action"],
-            importance=notice_data["importance"],
-            summary=notice_data["summary"],
-            raw_text=extracted_text,
-            notice_embedding=notice_embedding,
-        )
-
-        db.add(notice)
-        db.commit()
-        db.refresh(notice)
-        notifications = route_notice_to_students(db, notice)
+        notice, notifications = process_notice_workflow(db=db, raw_text=extracted_text)
 
         return {
             "message": "PDF notice processed and saved successfully.",
@@ -337,57 +254,7 @@ async def upload_image_notice(
         # 3. AI processing
         # ------------------------------------------
 
-        structured_data = process_new_notice(extracted_text)
-
-        notice_data = structured_data.model_dump()
-
-        registration_link = notice_data.get("registration_link")
-
-        if registration_link in ["None Provided", "None", "null", ""]:
-            registration_link = None
-
-        # ------------------------------------------
-        # 4. Embedding
-        # ------------------------------------------
-
-        notice_embedding_text = f"""
-            Title: {notice_data["title"]}
-            Category: {notice_data["category"]}
-            Summary: {notice_data["summary"]}
-            Required action: {notice_data["required_action"]}
-            Eligibility: {notice_data["eligibility"]}
-        """
-
-        notice_embedding = create_embedding(notice_embedding_text)
-
-        # ------------------------------------------
-        # 5. Save
-        # ------------------------------------------
-
-        notice = Notice(
-            id=str(uuid.uuid4()),
-            title=notice_data["title"],
-            category=notice_data["category"],
-            is_mandatory=notice_data["is_mandatory"],
-            eligibility=notice_data["eligibility"],
-            deadline=notice_data["deadline"],
-            registration_link=registration_link,
-            required_action=notice_data["required_action"],
-            importance=notice_data["importance"],
-            summary=notice_data["summary"],
-            raw_text=extracted_text,
-            notice_embedding=notice_embedding,
-        )
-
-        db.add(notice)
-        db.commit()
-        db.refresh(notice)
-
-        # ------------------------------------------
-        # 6. Automatic routing
-        # ------------------------------------------
-
-        notifications = route_notice_to_students(db, notice)
+        notice, notifications = process_notice_workflow(db=db, raw_text=extracted_text)
 
         return {
             "message": "Image notice processed successfully.",
@@ -409,7 +276,8 @@ async def upload_image_notice(
         db.rollback()
 
         raise HTTPException(
-            status_code=500, detail=f"Image processing failed: {str(e)}",
+            status_code=500,
+            detail=f"Image processing failed: {str(e)}",
         )
 
 
