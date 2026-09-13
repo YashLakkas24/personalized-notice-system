@@ -6,7 +6,11 @@ from strands.models.openai import OpenAIModel
 
 from app.agents.prompts import NOTICE_SYSTEM_PROMPT
 from app.schemas.notice import NoticeMetadata
-from app.agents.tools import get_student_population_summary
+from app.agents.tools import (
+    get_student_population_summary,
+    find_relevant_students,
+    route_processed_notice,
+)
 
 load_dotenv()
 
@@ -14,7 +18,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY is not configured.",tools=[get_student_population_summary])
+    raise RuntimeError("OPENAI_API_KEY is not configured.")
 
 
 model = OpenAIModel(
@@ -28,7 +32,15 @@ model = OpenAIModel(
     },
 )
 
-notice_agent = Agent(model=model, system_prompt=NOTICE_SYSTEM_PROMPT)
+notice_agent = Agent(
+    model=model,
+    system_prompt=NOTICE_SYSTEM_PROMPT,
+    tools=[
+        get_student_population_summary,
+        find_relevant_students,
+        route_processed_notice,
+    ],
+)
 
 
 def process_new_notice(raw_text: str) -> NoticeMetadata:
