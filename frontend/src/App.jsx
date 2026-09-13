@@ -10,10 +10,15 @@ export default function App() {
   const [students, setStudents] = useState([]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/students`)
-      .then((res) => res.json())
-      .then((data) => setStudents(data))
-      .catch((err) => console.error("Failed to load students:", err));
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/students`);
+        const data = await res.json();
+        setStudents(data);
+      } catch (err) {
+        console.error("Failed to load students:", err);
+      }
+    })();
   }, []);
 
   const path = window.location.pathname;

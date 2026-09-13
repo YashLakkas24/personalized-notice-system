@@ -25,8 +25,14 @@ from app.models.notice import Notice
 from app.services.embedding_service import create_embedding
 from app.models.notification import Notification
 from app.services.notice_workflow import process_notice_workflow
+import os
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+TESSERACT_PATH = os.getenv("TESSERACT_PATH")
+POPPLER_PATH = os.getenv("POPPLER_PATH")
+
+if TESSERACT_PATH:
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+
 
 app = FastAPI(
     title="Personalized Notice Intelligence System",

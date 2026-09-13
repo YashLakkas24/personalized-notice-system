@@ -7,7 +7,6 @@ import {
 import "./StudentDashboard.css";
 
 export default function StudentDashboard({ studentId }) {
-  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -54,8 +53,10 @@ export default function StudentDashboard({ studentId }) {
   }
 
   useEffect(() => {
-    loadNotices();
-  }, []);
+    (async () => {
+      await loadNotices();
+    })();
+  }, [studentId]);
 
   async function handleNotificationOpen(notification) {
     if (notification.status === "READ") {
