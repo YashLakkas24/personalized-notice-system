@@ -1,5 +1,6 @@
 from fastapi import (
     FastAPI,
+    BackgroundTasks,
     UploadFile,
     File,
     Form,
@@ -12,25 +13,20 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from typing import List
 from io import BytesIO
-import uuid
 import pytesseract
 from PIL import Image
 
 from pypdf import PdfReader
 
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.models.student import Student
 from app.models.notice import Notice
 
-from app.agents.notice_agent import process_new_notice
 from app.services.embedding_service import create_embedding
-from app.services.notification_service import route_notice_to_students
 from app.models.notification import Notification
 from app.services.notice_workflow import process_notice_workflow
 
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Tesseract-OCR"
-)
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 app = FastAPI(
     title="Personalized Notice Intelligence System",
@@ -59,6 +55,27 @@ class StudentProfileCreate(BaseModel):
     interests: List[str]
 
 
+def process_notice_in_background(raw_text: str):
+    db = SessionLocal()
+
+    try:
+        notice, notifications, routing_report = process_notice_workflow(
+            db=db,
+            raw_text=raw_text,
+        )
+
+        print(f"Notice processed: {notice.title}")
+
+        print(f"Routing report: {routing_report}")
+
+    except Exception as e:
+        db.rollback()
+        print(f"Background notice processing failed: {e}")
+
+    finally:
+        db.close()
+
+
 # ============================================================
 # HEALTH CHECK
 # ============================================================
@@ -79,40 +96,17 @@ def read_root():
 
 
 @app.post("/api/admin/notice/text")
-async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db)):
-
-    import traceback
+async def upload_text_notice(
+    background_tasks: BackgroundTasks,
+    text: str = Form(...),
+):
 
     if not text.strip():
         raise HTTPException(status_code=400, detail="Notice text cannot be empty.")
 
-    try:
+    background_tasks.add_task(process_notice_in_background, text)
 
-        notice, notifications = process_new_notice(db=db, raw_text=text)
-
-        return {
-            "message": "Notice processed and saved successfully.",
-            "notifications_created": len(notifications),
-            "notice": {
-                "id": notice.id,
-                "title": notice.title,
-                "category": notice.category,
-                "is_mandatory": notice.is_mandatory,
-                "eligibility": notice.eligibility,
-                "deadline": notice.deadline,
-                "registration_link": notice.registration_link,
-                "required_action": notice.required_action,
-                "importance": notice.importance,
-                "summary": notice.summary,
-            },
-        }
-    except Exception as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500, detail=f"Notice processing failed: {str(e)}"
-        )
+    return {"message": "Notice accepted for background processing."}
 
 
 # ============================================================
@@ -122,7 +116,8 @@ async def upload_text_notice(text: str = Form(...), db: Session = Depends(get_db
 
 @app.post("/api/admin/notice/pdf")
 async def upload_pdf_notice(
-    file: UploadFile = File(...), db: Session = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
 ):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF file are supported.")
@@ -158,7 +153,10 @@ async def upload_pdf_notice(
             try:
                 from pdf2image import convert_from_bytes
 
-                images = convert_from_bytes(pdf_bytes)
+                images = convert_from_bytes(
+                    pdf_bytes,
+                    poppler_path=r"C:\Program Files\poppler-26.07.0\Library\bin",
+                )
 
                 ocr_text = []
 
@@ -173,6 +171,7 @@ async def upload_pdf_notice(
                 raise HTTPException(
                     status_code=400, detail=f"PDF text extraction/OCR failed: {str(e)}"
                 )
+
         if not extracted_text.strip():
             raise HTTPException(
                 status_code=400, detail="Could not extract text from the PDF."
@@ -182,39 +181,27 @@ async def upload_pdf_notice(
         # 3. AI processing
         # ------------------------------------------
 
-        notice, notifications = process_notice_workflow(db=db, raw_text=extracted_text)
+        background_tasks.add_task(
+            process_notice_in_background,
+            extracted_text,
+        )
 
-        return {
-            "message": "PDF notice processed and saved successfully.",
-            "notifications_created": len(notifications),
-            "notice": {
-                "id": notice.id,
-                "title": notice.title,
-                "category": notice.category,
-                "is_mandatory": notice.is_mandatory,
-                "eligibility": notice.eligibility,
-                "deadline": notice.deadline,
-                "registration_link": notice.registration_link,
-                "required_action": notice.required_action,
-                "importance": notice.importance,
-                "summary": notice.summary,
-            },
-        }
+        return {"message": "PDF accepted for background processing."}
 
     except HTTPException:
         raise
 
     except Exception as e:
-
-        db.rollback()
-
-        raise HTTPException(status_code=500, detail=f"PDF Processing broken:{str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF processing failed: {str(e)}",
+        )
 
 
 @app.post("/api/admin/notice/image")
 async def upload_image_notice(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
 ):
     allowed_types = {
         "image/jpeg",
@@ -254,26 +241,17 @@ async def upload_image_notice(
         # 3. AI processing
         # ------------------------------------------
 
-        notice, notifications = process_notice_workflow(db=db, raw_text=extracted_text)
+        background_tasks.add_task(
+            process_notice_in_background,
+            extracted_text,
+        )
 
-        return {
-            "message": "Image notice processed successfully.",
-            "notifications_created": len(notifications),
-            "notice": {
-                "id": notice.id,
-                "title": notice.title,
-                "category": notice.category,
-                "deadline": notice.deadline,
-                "importance": notice.importance,
-                "summary": notice.summary,
-            },
-        }
+        return {"message": "Image accepted for background processing."}
 
     except HTTPException:
         raise
 
     except Exception as e:
-        db.rollback()
 
         raise HTTPException(
             status_code=500,
@@ -418,4 +396,4 @@ def mark_notification_read(
 
     db.commit()
 
-    return {"message": "Notificatio marked as read."}
+    return {"message": "Notification marked as read."}

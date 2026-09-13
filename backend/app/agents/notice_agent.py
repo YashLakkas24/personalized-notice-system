@@ -6,6 +6,7 @@ from strands.models.openai import OpenAIModel
 
 from app.agents.prompts import NOTICE_SYSTEM_PROMPT
 from app.schemas.notice import NoticeMetadata
+from app.agents.tools import get_student_population_summary
 
 load_dotenv()
 
@@ -13,7 +14,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY is not configured.")
+    raise RuntimeError("OPENAI_API_KEY is not configured.",tools=[get_student_population_summary])
 
 
 model = OpenAIModel(

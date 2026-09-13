@@ -96,9 +96,9 @@ def process_notice_workflow(
     # 5. Route notice
     # --------------------------------------------------
 
-    notifications = route_notice_to_students(
+    notifications,routing_report = route_notice_to_students(
         db,
         notice,
     )
 
-    return notice, notifications
+    return notice, notifications,routing_report

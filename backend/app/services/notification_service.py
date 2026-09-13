@@ -18,6 +18,15 @@ def route_notice_to_students(
 
     created = []
 
+    # Routing metrics
+    students_evaluated = 0
+    eligible_count = 0
+    not_eligible_count = 0
+    highly_relevant_count = 0
+    medium_relevant_count = 0
+    suppressed_count = 0
+    mandatory_count = 0
+
     for student_record in students:
 
         # Convert SQLAlchemy model -> dictionary
@@ -49,13 +58,32 @@ def route_notice_to_students(
             notice_data,
         )
 
-        if evaluation["routing"] not in [
-            "NOTIFY",
-            "MUST_NOTIFY",
-        ]:
+        # ------------------------------------------
+        # Routing metrics
+        # ------------------------------------------
+
+        if evaluation["eligible"]:
+            eligible_count += 1
+        else:
+            not_eligible_count += 1
+
+        if evaluation["relevance_level"] == "HIGH":
+            highly_relevant_count += 1
+
+        elif evaluation["relevance_level"] == "MEDIUM":
+            medium_relevant_count += 1
+
+        if evaluation["routing"] == "SUPPRESS":
+            suppressed_count += 1
             continue
 
+        if evaluation["routing"] == "MUST_NOTIFY":
+            mandatory_count += 1
+
+        # ------------------------------------------
         # Prevent duplicate notifications
+        # ------------------------------------------
+
         existing = (
             db.query(Notification)
             .filter(
@@ -86,4 +114,19 @@ def route_notice_to_students(
 
     db.commit()
 
-    return created
+    # ------------------------------------------
+    # Routing report
+    # ------------------------------------------
+
+    routing_report = {
+        "students_evaluated": students_evaluated,
+        "eligible": eligible_count,
+        "not_eligible": not_eligible_count,
+        "highly_relevant": highly_relevant_count,
+        "medium_relevant": medium_relevant_count,
+        "suppressed": suppressed_count,
+        "mandatory": mandatory_count,
+        "notifications_created": len(created),
+    }
+
+    return created, routing_report
