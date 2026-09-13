@@ -28,7 +28,8 @@ def route_notice_to_students(
     mandatory_count = 0
 
     for student_record in students:
-
+        
+        students_evaluated += 1
         # Convert SQLAlchemy model -> dictionary
         student = {
             "id": student_record.id,

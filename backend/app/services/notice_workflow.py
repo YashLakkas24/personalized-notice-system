@@ -4,6 +4,7 @@ from app.agents.notice_agent import process_new_notice
 from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notice import Notice
+from app.agents.notice_orchestrator import notice_orchestrator
 
 import uuid
 
@@ -96,9 +97,18 @@ def process_notice_workflow(
     # 5. Route notice
     # --------------------------------------------------
 
-    notifications,routing_report = route_notice_to_students(
-        db,
-        notice,
-    )
+    result = notice_orchestrator(f"""
+    A new notice has been created.
 
-    return notice, notifications,routing_report
+    Notice ID: {notice.id}
+    Title: {notice.title}
+    Category: {notice.category}
+    Eligibility: {notice.eligibility}
+
+    Process this notice and make sure it is routed
+    to the appropriate students.
+
+    Use the available tools as appropriate.
+    """)
+
+    return notice, result

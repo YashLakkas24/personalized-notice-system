@@ -121,9 +121,16 @@ def route_processed_notice(notice_id: str) -> str:
             notice,
         )
 
-        return (
-            f"Notice '{notice.title}' routed successfully.\n"
-            f"Routing report: {routing_report}"
+        import json
+
+        return json.dumps(
+            {
+                "status": "success",
+                "notice_id": notice.id,
+                "title": notice.title,
+                "notifications_created": len(notifications),
+                "routing_report": routing_report,
+            }
         )
 
     except Exception as e:
