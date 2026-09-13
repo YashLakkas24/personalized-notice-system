@@ -1,6 +1,6 @@
 import os
 
-from strands import Agent
+from strands import Agent, tool
 from dotenv import load_dotenv
 from strands.models.openai import OpenAIModel
 
@@ -37,15 +37,15 @@ def process_new_notice(raw_text: str) -> NoticeMetadata:
 
     result = notice_agent(
         f"""
-Analyze the following college notice.
+        Analyze the following college notice.
 
-RAW NOTICE:
-----------------
-{raw_text}
-----------------
+        RAW NOTICE:
+        ----------------
+        {raw_text}
+        ----------------
 
-Extract all available information according to the NoticeMetadata schema.
-Do not invent missing information.
+        Extract all available information according to the NoticeMetadata schema.
+        Do not invent missing information.
 """,
         structured_output_model=NoticeMetadata,
     )

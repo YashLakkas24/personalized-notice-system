@@ -1,5 +1,6 @@
 // filepath: frontend/src/App.jsx
 import { useState, useEffect } from "react";
+import { markNotificationRead } from "./api/notifications";
 
 export default function App() {
   // Application State
@@ -188,7 +189,13 @@ export default function App() {
                 {feed.map((item) => (
                   <div
                     key={item.notification_id}
-                    className={`bg-white p-5 rounded-xl border shadow-sm transition-all relative ${
+                    onClick={() =>
+                      markNotificationRead(
+                        selectedStudentId,
+                        item.notification_id,
+                      )
+                    }
+                    className={`bg-white p-5 rounded-xl border shadow-sm transition-all relative cursor-pointer ${
                       item.priority === "CRITICAL"
                         ? "border-l-4 border-l-red-500 border-gray-200"
                         : item.priority === "HIGH"
@@ -214,6 +221,12 @@ export default function App() {
                         {Number(item.relevance_score).toFixed(2)}
                       </span>
                     </div>
+
+                    {item.status === "UNREAD" && (
+                      <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200">
+                        UNREAD
+                      </span>
+                    )}
 
                     {/* Content */}
                     <div className="pr-32">
