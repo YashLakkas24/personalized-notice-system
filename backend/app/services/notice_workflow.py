@@ -96,19 +96,24 @@ def process_notice_workflow(
     # --------------------------------------------------
     # 5. Route notice
     # --------------------------------------------------
+    notifications, routing_report = route_notice_to_students(db, notice)
 
-    result = notice_orchestrator(f"""
-    A new notice has been created.
+    # --------------------------------------------------
+    # 6. Agent orchestration / audit
+    # --------------------------------------------------
 
-    Notice ID: {notice.id}
-    Title: {notice.title}
-    Category: {notice.category}
-    Eligibility: {notice.eligibility}
+    notice_orchestrator(f"""
+      A new notice has been created.
 
-    Process this notice and make sure it is routed
-    to the appropriate students.
+      Notice ID: {notice.id}
+      Title: {notice.title}
+      Category: {notice.category}
+      Eligibility: {notice.eligibility}
 
-    Use the available tools as appropriate.
+      Process this notice and make sure it is routed
+      to the appropriate students.
+
+      Use the available tools as appropriate.
     """)
 
-    return notice, result
+    return notice, notifications, routing_report

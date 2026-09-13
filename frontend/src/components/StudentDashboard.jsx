@@ -4,6 +4,13 @@ import {
   getStudentNotifications,
   markNotificationRead,
 } from "../api/notifications";
+import './StudentDashboard.css';
+
+import './StudentDashboard.css';
+
+export default function StudentDashboard() {
+  return <div className="notice-card">Notice Content</div>;
+}
 
 export default function StudentDashboard() {
   const studentId = "student_1";
@@ -15,6 +22,13 @@ export default function StudentDashboard() {
   const [relevantNotices, setRelevantNotices] = useState([]);
   const [allNotices, setAllNotices] = useState([]);
 
+  const unreadCount = relevantNotices.filter(
+    (notice) => notice.status === "UNREAD",
+  ).length;
+
+  const urgentCount = relevantNotices.filter(
+    (notice) => notice.priority === "CRITICAL" || notice.priority === "HIGH",
+  ).length;
   async function loadNotices() {
     try {
       setLoading(true);
@@ -114,17 +128,19 @@ export default function StudentDashboard() {
       {/* TABS */}
       <div className="notice-tabs">
         <button
-          onClick={() => setActiveTab("relevant")}
           className={activeTab === "relevant" ? "active" : ""}
+          onClick={() => setActiveTab("relevant")}
         >
-          Relevant to You
+          🎯 Relevant to You
+          <span>{relevantNotices.length}</span>
         </button>
 
         <button
-          onClick={() => setActiveTab("all")}
           className={activeTab === "all" ? "active" : ""}
+          onClick={() => setActiveTab("all")}
         >
-          All Notices
+          📋 All Notices
+          <span>{allNotices.length}</span>
         </button>
       </div>
 
@@ -145,6 +161,39 @@ export default function StudentDashboard() {
         <div>
           <strong>{displayedCount}</strong>{" "}
           {activeTab === "relevant" ? "relevant notices" : "total notices"}
+        </div>
+      </div>
+      <div className="notice-stats">
+        <div className="stat-card">
+          <span className="stat-icon">🎯</span>
+          <div>
+            <strong>{relevantNotices.length}</strong>
+            <span>Relevant</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">🔴</span>
+          <div>
+            <strong>{urgentCount}</strong>
+            <span>Urgent</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">🔔</span>
+          <div>
+            <strong>{unreadCount}</strong>
+            <span>Unread</span>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-icon">📋</span>
+          <div>
+            <strong>{allNotices.length}</strong>
+            <span>Total Notices</span>
+          </div>
         </div>
       </div>
 
@@ -173,34 +222,43 @@ export default function StudentDashboard() {
                 onClick={() => handleNotificationOpen(notification)}
               >
                 <div className="notification-top">
-                  <span>
+                  <span
+                    className={`priority-badge ${getPriorityClass(
+                      notification.priority,
+                    )}`}
+                  >
                     {notification.priority === "CRITICAL"
-                      ? "🔴"
+                      ? "🔴 Critical"
                       : notification.priority === "HIGH"
-                        ? "🟠"
-                        : "🔵"}{" "}
-                    {notification.priority}
+                        ? "🟠 High Priority"
+                        : "🔵 Normal"}
                   </span>
 
-                  {notification.days_left !== null &&
-                    notification.days_left !== undefined && (
-                      <span>
-                        {notification.days_left === 0
-                          ? "Due today"
-                          : notification.days_left === 1
-                            ? "1 day left"
-                            : `${notification.days_left} days left`}
-                      </span>
-                    )}
+                  <span className="category-badge">
+                    {notification.category}
+                  </span>
                 </div>
 
                 <h2>{notification.title}</h2>
 
                 <p>{notification.summary}</p>
+                <div className="notice-meta">
+                  {notification.deadline && (
+                    <span>📅 Deadline: {notification.deadline}</span>
+                  )}
 
+                  {notification.days_left !== null &&
+                    notification.days_left !== undefined && (
+                      <span>
+                        ⏳{" "}
+                        {notification.days_left === 0
+                          ? "Due today"
+                          : `${notification.days_left} days left`}
+                      </span>
+                    )}
+                </div>
                 <div className="why-section">
-                  <strong>Why you're seeing this</strong>
-
+                  <strong>🤖 Why this was recommended</strong>
                   <p>{notification.reason}</p>
                 </div>
 

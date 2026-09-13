@@ -39,7 +39,13 @@ Important rules:
 - The application's deterministic decision engine is the
   authority for eligibility and relevance.
 - Use the available tools when they are useful.
-- Ensure that a processed notice is routed to students.
+- The application performs final routing decisions
+  deterministically.
+
+-  Do not call route_processed_notice.
+-  Do not create notifications.
+-  Your role is to inspect the processed notice and
+-  provide orchestration/audit reasoning.
 """
 
 
