@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { uploadNoticeBatch } from "../api/notifications";
+import "./AdminDashboard.css";
 
 export default function AdminDashboard() {
   const [files, setFiles] = useState([]);
