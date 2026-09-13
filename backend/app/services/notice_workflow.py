@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.services.notice_service import process_new_notice
+from app.agents.notice_agent import process_new_notice
 from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notice import Notice
