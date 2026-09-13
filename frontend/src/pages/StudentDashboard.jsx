@@ -4,13 +4,7 @@ import {
   getStudentNotifications,
   markNotificationRead,
 } from "../api/notifications";
-import './StudentDashboard.css';
-
-import './StudentDashboard.css';
-
-export default function StudentDashboard() {
-  return <div className="notice-card">Notice Content</div>;
-}
+import "./StudentDashboard.css";
 
 export default function StudentDashboard() {
   const studentId = "student_1";
