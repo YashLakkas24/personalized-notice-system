@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { uploadNotice } from "../api/notifications";
+import { uploadNoticeBatch } from "../api/notifications";
 
 export default function AdminDashboard() {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
   async function handleUpload() {
-    if (!file) {
-      setError("Please select a PDF or image.");
+    if (files.length === 0) {
+      setError("Please select at least one notice.");
       return;
     }
 
@@ -18,7 +18,7 @@ export default function AdminDashboard() {
     setResult(null);
 
     try {
-      const data = await uploadNotice(file);
+      const data = await uploadNoticeBatch(files);
 
       setResult(data);
     } catch (err) {
@@ -39,34 +39,55 @@ export default function AdminDashboard() {
 
       <input
         type="file"
-        accept=".pdf,.png,.jpg,.jpeg,.webp"
-        onChange={(e) => setFile(e.target.files[0])}
+        multiple
+        accept=".pdf,.png,.jpg,.jpeg,.webp,.txt"
+        onChange={(e) => setFiles(Array.from(e.target.files))}
       />
 
-      {file && (
-        <p>
-          Selected: <strong>{file.name}</strong>
-        </p>
+      {files.length > 0 && (
+        <div>
+          <p>
+            <strong>{files.length}</strong> notices selected
+          </p>
+
+          {files.map((file) => (
+            <p key={file.name}>📄 {file.name}</p>
+          ))}
+        </div>
       )}
 
-      <button onClick={handleUpload} disabled={loading}>
-        {loading ? "Processing..." : "Process Notice"}
+      <button onClick={handleUpload} disabled={loading || files.length === 0}>
+        {loading ? "Processing Notices..." : "Process Notices"}
       </button>
 
       {error && <p>{error}</p>}
 
       {result && (
         <div>
-          <h2>Notice Processed ✓</h2>
+          <h2>Processing Complete ✓</h2>
 
           <p>
-            <strong>{result.notice?.title}</strong>
+            Total: <strong>{result.total_files}</strong>
           </p>
 
           <p>
-            Notifications created:{" "}
-            <strong>{result.notifications_created}</strong>
+            Successful: <strong>{result.successful}</strong>
           </p>
+
+          <p>
+            Failed: <strong>{result.failed}</strong>
+          </p>
+
+          <div>
+            {result.results.map((item) => (
+              <div key={item.filename}>
+                {item.status === "success" ? "✅" : "❌"}{" "}
+                <strong>{item.filename}</strong>
+                {item.title && <span> — {item.title}</span>}
+                {item.error && <span> — {item.error}</span>}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -317,6 +317,146 @@ def get_students(
     return students
 
 
+@app.post("/api/admin/notices/batch")
+async def upload_notice_batch(
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+):
+    results = []
+
+    for file in files:
+        try:
+            filename = file.filename.lower()
+            file_bytes = await file.read()
+
+            # PDF
+            if filename.endswith(".pdf"):
+                reader = PdfReader(BytesIO(file_bytes))
+
+                extracted_text = ""
+
+                for page in reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        extracted_text += page_text + "\n"
+
+                # OCR fallback
+                if not extracted_text.strip():
+                    from pdf2image import convert_from_bytes
+
+                    images = convert_from_bytes(
+                        file_bytes,
+                        poppler_path=r"C:\Program Files\poppler-26.07.0\Library\bin",
+                    )
+
+                    ocr_text = []
+
+                    for image in images:
+                        text = pytesseract.image_to_string(image)
+                        if text.strip():
+                            ocr_text.append(text)
+
+                    extracted_text = "\n".join(ocr_text)
+
+            # Image
+            elif filename.endswith((".jpg", ".jpeg", ".png", ".webp")):
+                image = Image.open(BytesIO(file_bytes))
+                extracted_text = pytesseract.image_to_string(image)
+
+            # Text file
+            elif filename.endswith(".txt"):
+                extracted_text = file_bytes.decode(
+                    "utf-8",
+                    errors="ignore",
+                )
+
+            else:
+                results.append(
+                    {
+                        "filename": file.filename,
+                        "status": "failed",
+                        "error": "Unsupported file type",
+                    }
+                )
+                continue
+
+            if not extracted_text.strip():
+                results.append(
+                    {
+                        "filename": file.filename,
+                        "status": "failed",
+                        "error": "Could not extract text",
+                    }
+                )
+                continue
+
+            notice, notifications, routing_report = process_notice_workflow(
+                db=db,
+                raw_text=extracted_text,
+            )
+
+            results.append(
+                {
+                    "filename": file.filename,
+                    "status": "success",
+                    "notice_id": notice.id,
+                    "title": notice.title,
+                    "notifications_created": len(notifications),
+                }
+            )
+
+        except Exception as e:
+            db.rollback()
+
+            results.append(
+                {
+                    "filename": file.filename,
+                    "status": "failed",
+                    "error": str(e),
+                }
+            )
+
+    return {
+        "message": "Batch processing completed",
+        "total_files": len(files),
+        "successful": sum(1 for r in results if r["status"] == "success"),
+        "failed": sum(1 for r in results if r["status"] == "failed"),
+        "results": results,
+    }
+
+
+# ============================================================
+# ALL NOTICES
+# ============================================================
+
+
+@app.get("/api/notices")
+def get_all_notices(
+    db: Session = Depends(get_db),
+):
+    notices = db.query(Notice).order_by(Notice.created_at.desc()).all()
+
+    return {
+        "total": len(notices),
+        "notices": [
+            {
+                "id": notice.id,
+                "title": notice.title,
+                "summary": notice.summary,
+                "category": notice.category,
+                "is_mandatory": notice.is_mandatory,
+                "eligibility": notice.eligibility,
+                "deadline": notice.deadline,
+                "registration_link": notice.registration_link,
+                "required_action": notice.required_action,
+                "importance": notice.importance,
+                "created_at": notice.created_at,
+            }
+            for notice in notices
+        ],
+    }
+
+
 # ============================================================
 # STUDENT PERSONALIZED FEED
 # ============================================================

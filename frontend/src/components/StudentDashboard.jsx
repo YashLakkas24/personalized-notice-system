@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  getAllNotices,
   getStudentNotifications,
   markNotificationRead,
 } from "../api/notifications";
@@ -7,19 +8,22 @@ import {
 export default function StudentDashboard() {
   const studentId = "student_1";
 
-  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
+  const [activeTab, setActiveTab] = useState("relevant");
+  const [relevantNotices, setRelevantNotices] = useState([]);
+  const [allNotices, setAllNotices] = useState([]);
 
-  async function loadNotifications() {
+  async function loadNotices() {
     try {
       setLoading(true);
+      setError("");
 
-      const data = await getStudentNotifications(studentId);
+      const [relevant, all] = await Promise.all([
+        getStudentNotifications(studentId),
+        getAllNotices(),
+      ]);
 
       const priority = {
         CRITICAL: 4,
@@ -28,11 +32,12 @@ export default function StudentDashboard() {
         EXPIRED: 1,
       };
 
-      const sorted = (data.notifications || []).sort(
+      const sortedRelevant = (relevant.notifications || []).sort(
         (a, b) => (priority[b.priority] || 0) - (priority[a.priority] || 0),
       );
 
-      setNotifications(sorted);
+      setRelevantNotices(sortedRelevant);
+      setAllNotices(all.notices || []);
     } catch (err) {
       console.error(err);
       setError("Unable to load your notices.");
@@ -40,6 +45,10 @@ export default function StudentDashboard() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadNotices();
+  }, []);
 
   async function handleNotificationOpen(notification) {
     if (notification.status === "READ") {
@@ -49,7 +58,7 @@ export default function StudentDashboard() {
     try {
       await markNotificationRead(studentId, notification.notification_id);
 
-      setNotifications((current) =>
+      setRelevantNotices((current) =>
         current.map((item) =>
           item.notification_id === notification.notification_id
             ? {
@@ -91,95 +100,180 @@ export default function StudentDashboard() {
       <div>
         <h1>My Notices</h1>
         <p>{error}</p>
-        <button onClick={loadNotifications}>Retry</button>
+
+        <button onClick={loadNotices}>Retry</button>
       </div>
     );
   }
 
+  const displayedCount =
+    activeTab === "relevant" ? relevantNotices.length : allNotices.length;
+
   return (
     <div className="student-dashboard">
+      {/* TABS */}
+      <div className="notice-tabs">
+        <button
+          onClick={() => setActiveTab("relevant")}
+          className={activeTab === "relevant" ? "active" : ""}
+        >
+          Relevant to You
+        </button>
+
+        <button
+          onClick={() => setActiveTab("all")}
+          className={activeTab === "all" ? "active" : ""}
+        >
+          All Notices
+        </button>
+      </div>
+
+      {/* HEADER */}
       <div className="dashboard-header">
         <div>
-          <h1>My Notices</h1>
-          <p>Important information selected specifically for you.</p>
+          <h1>
+            {activeTab === "relevant" ? "Relevant Notices" : "All Notices"}
+          </h1>
+
+          <p>
+            {activeTab === "relevant"
+              ? "Important information selected specifically for you."
+              : "All notices published by the administration."}
+          </p>
         </div>
 
         <div>
-          <strong>{notifications.length}</strong> relevant notices
+          <strong>{displayedCount}</strong>{" "}
+          {activeTab === "relevant" ? "relevant notices" : "total notices"}
         </div>
       </div>
 
-      {notifications.length === 0 ? (
-        <div className="empty-state">
-          <h2>No relevant notices</h2>
-          <p>
-            You're all caught up. We'll surface something when there's something
-            relevant to you.
-          </p>
-        </div>
-      ) : (
-        <div className="notification-list">
-          {notifications.map((notification) => (
-            <div
-              key={notification.notification_id}
-              className={`notification-card ${getPriorityClass(
-                notification.priority,
-              )} ${notification.status === "UNREAD" ? "unread" : ""}`}
-              onClick={() => handleNotificationOpen(notification)}
-            >
-              <div className="notification-top">
-                <span>
-                  {notification.priority === "CRITICAL"
-                    ? "🔴"
-                    : notification.priority === "HIGH"
-                      ? "🟠"
-                      : "🔵"}{" "}
-                  {notification.priority}
-                </span>
+      {/* ========================= */}
+      {/* RELEVANT NOTICES */}
+      {/* ========================= */}
 
-                {notification.days_left !== null &&
-                  notification.days_left !== undefined && (
-                    <span>
-                      {notification.days_left === 0
-                        ? "Due today"
-                        : notification.days_left === 1
-                          ? "1 day left"
-                          : `${notification.days_left} days left`}
-                    </span>
+      {activeTab === "relevant" &&
+        (relevantNotices.length === 0 ? (
+          <div className="empty-state">
+            <h2>No relevant notices</h2>
+
+            <p>
+              You're all caught up. We'll surface something when there's
+              something relevant to you.
+            </p>
+          </div>
+        ) : (
+          <div className="notification-list">
+            {relevantNotices.map((notification) => (
+              <div
+                key={notification.notification_id}
+                className={`notification-card ${getPriorityClass(
+                  notification.priority,
+                )} ${notification.status === "UNREAD" ? "unread" : ""}`}
+                onClick={() => handleNotificationOpen(notification)}
+              >
+                <div className="notification-top">
+                  <span>
+                    {notification.priority === "CRITICAL"
+                      ? "🔴"
+                      : notification.priority === "HIGH"
+                        ? "🟠"
+                        : "🔵"}{" "}
+                    {notification.priority}
+                  </span>
+
+                  {notification.days_left !== null &&
+                    notification.days_left !== undefined && (
+                      <span>
+                        {notification.days_left === 0
+                          ? "Due today"
+                          : notification.days_left === 1
+                            ? "1 day left"
+                            : `${notification.days_left} days left`}
+                      </span>
+                    )}
+                </div>
+
+                <h2>{notification.title}</h2>
+
+                <p>{notification.summary}</p>
+
+                <div className="why-section">
+                  <strong>Why you're seeing this</strong>
+
+                  <p>{notification.reason}</p>
+                </div>
+
+                <div className="notification-actions">
+                  {notification.registration_link && (
+                    <a
+                      href={notification.registration_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNotificationOpen(notification);
+                      }}
+                    >
+                      Take Action →
+                    </a>
                   )}
+
+                  {notification.status === "UNREAD" && <span>● Unread</span>}
+                </div>
               </div>
+            ))}
+          </div>
+        ))}
 
-              <h2>{notification.title}</h2>
+      {/* ========================= */}
+      {/* ALL NOTICES */}
+      {/* ========================= */}
 
-              <p>{notification.summary}</p>
+      {activeTab === "all" &&
+        (allNotices.length === 0 ? (
+          <div className="empty-state">
+            <h2>No notices available</h2>
 
-              <div className="why-section">
-                <strong>Why you're seeing this</strong>
+            <p>There are currently no notices.</p>
+          </div>
+        ) : (
+          <div className="notification-list">
+            {allNotices.map((notice) => (
+              <div key={notice.id} className="notification-card">
+                <div className="notification-top">
+                  <span>{notice.category}</span>
 
-                <p>{notification.reason}</p>
-              </div>
+                  {notice.deadline && <span>Deadline: {notice.deadline}</span>}
+                </div>
 
-              <div className="notification-actions">
-                {notification.registration_link && (
-                  <a
-                    href={notification.registration_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleNotificationOpen(notification);
-                    }}
-                  >
-                    Take Action →
-                  </a>
+                <h2>{notice.title}</h2>
+
+                <p>{notice.summary}</p>
+
+                {notice.required_action && (
+                  <div className="why-section">
+                    <strong>Required Action</strong>
+
+                    <p>{notice.required_action}</p>
+                  </div>
                 )}
 
-                {notification.status === "UNREAD" && <span>● Unread</span>}
+                {notice.registration_link && (
+                  <div className="notification-actions">
+                    <a
+                      href={notice.registration_link}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View / Register →
+                    </a>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ))}
     </div>
   );
 }
