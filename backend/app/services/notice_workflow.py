@@ -87,6 +87,7 @@ def process_notice_workflow(
         summary=notice_data["summary"],
         raw_text=raw_text,
         notice_embedding=notice_embedding,
+        pdf_url=pdf_url,
     )
 
     db.add(notice)

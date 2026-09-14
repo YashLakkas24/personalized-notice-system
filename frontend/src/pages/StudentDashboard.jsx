@@ -393,6 +393,17 @@ export default function StudentDashboard({ studentId }) {
                   </div>
                 )}
 
+                {notice.pdf_url && (
+                  <a
+                    href={`http://127.0.0.1:8000${notice.pdf_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="view-notice-btn"
+                  >
+                    📄 View Original Notice
+                  </a>
+                )}
+
                 {notice.registration_link && (
                   <div className="notification-actions">
                     <a

@@ -33,3 +33,5 @@ class Notice(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     notice_embedding = Column(JSON, nullable=True)
+
+    pdf_url = Column(String, nullable=True)

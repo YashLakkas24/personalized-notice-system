@@ -26,6 +26,8 @@ from app.services.embedding_service import create_embedding
 from app.models.notification import Notification
 from app.services.notice_workflow import process_notice_workflow
 import os
+import uuid
+from fastapi.staticfiles import StaticFiles
 
 TESSERACT_PATH = os.getenv("TESSERACT_PATH")
 POPPLER_PATH = os.getenv("POPPLER_PATH")
@@ -37,6 +39,14 @@ if TESSERACT_PATH:
 app = FastAPI(
     title="Personalized Notice Intelligence System",
     description="AI-powered personalized college notice platform",
+)
+
+os.makedirs("uploads/notices", exist_ok=True)
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads",
 )
 
 app.add_middleware(
@@ -71,7 +81,10 @@ class StudentPreferencesUpdate(BaseModel):
     preferences: str
 
 
-def process_notice_in_background(raw_text: str):
+def process_notice_in_background(
+    raw_text: str,
+    pdf_url: str = None,
+):
     db = SessionLocal()
 
     try:
@@ -79,6 +92,12 @@ def process_notice_in_background(raw_text: str):
             db=db,
             raw_text=raw_text,
         )
+
+        # Attach original PDF to the newly created notice
+        if pdf_url:
+            notice.pdf_url = pdf_url
+            db.commit()
+            db.refresh(notice)
 
         print(f"Notice processed: {notice.title}")
 
@@ -163,7 +182,10 @@ async def upload_pdf_notice(
     file: UploadFile = File(...),
 ):
     if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF file are supported.")
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF file are supported.",
+        )
 
     try:
 
@@ -173,11 +195,26 @@ async def upload_pdf_notice(
 
         pdf_bytes = await file.read()
 
-        reader = PdfReader(BytesIO(pdf_bytes))
+        # ------------------------------------------
+        # 1B. Save original PDF
+        # ------------------------------------------
+
+        upload_dir = "uploads/notices"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        pdf_filename = f"{uuid.uuid4()}.pdf"
+        pdf_path = os.path.join(upload_dir, pdf_filename)
+
+        with open(pdf_path, "wb") as f:
+            f.write(pdf_bytes)
+
+        pdf_url = f"/uploads/notices/{pdf_filename}"
 
         # ------------------------------------------
         # 2. Extract text
         # ------------------------------------------
+
+        reader = PdfReader(BytesIO(pdf_bytes))
 
         extracted_text = ""
 
@@ -210,14 +247,17 @@ async def upload_pdf_notice(
                         ocr_text.append(text)
 
                 extracted_text = "\n".join(ocr_text)
+
             except Exception as e:
                 raise HTTPException(
-                    status_code=400, detail=f"PDF text extraction/OCR failed: {str(e)}"
+                    status_code=400,
+                    detail=f"PDF text extraction/OCR failed: {str(e)}",
                 )
 
         if not extracted_text.strip():
             raise HTTPException(
-                status_code=400, detail="Could not extract text from the PDF."
+                status_code=400,
+                detail="Could not extract text from the PDF.",
             )
 
         # ------------------------------------------
@@ -227,6 +267,7 @@ async def upload_pdf_notice(
         background_tasks.add_task(
             process_notice_in_background,
             extracted_text,
+            pdf_url,
         )
 
         return {"message": "PDF accepted for background processing."}
@@ -522,6 +563,10 @@ async def upload_notice_batch(
                 raw_text=extracted_text,
             )
 
+            notice.pdf_url = pdf_url
+            db.commit()
+            db.refresh(notice)
+
             results.append(
                 {
                     "filename": file.filename,
@@ -576,6 +621,7 @@ def get_all_notices(
                 "deadline": notice.deadline,
                 "registration_link": notice.registration_link,
                 "required_action": notice.required_action,
+                "pdf_url": notice.pdf_url,
                 "importance": notice.importance,
                 "created_at": notice.created_at,
             }
@@ -615,6 +661,7 @@ def get_notifications(
                 "notice_id": notice.id,
                 "title": notice.title,
                 "summary": notice.summary,
+                "pdf_url": notice.pdf_url,
                 "category": notice.category,
                 "deadline": notice.deadline,
                 "registration_link": notice.registration_link,
