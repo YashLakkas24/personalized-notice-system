@@ -1,5 +1,5 @@
 from strands import Agent
-from strands.models.openai import OpenAIModel
+from strands.models import OpenAIModel
 from app.agents.tools import (
     get_student_population_summary,
     find_relevant_students,
