@@ -28,17 +28,44 @@ def create_preference_embedding(preferences: str) -> list[float]:
         response = client.chat.completions.create(
             model=PREFERENCE_NORMALIZATION_MODEL,
             temperature=0,
-            max_tokens=180,
+            max_tokens=250,
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "You normalize student preferences for semantic search. "
-                        "Return ONLY a concise comma-separated list of concepts, "
-                        "activities, opportunities, events, competitions, "
-                        "programs, and related terms implied by the student's "
-                        "preference. Do not invent unrelated interests."
-                    ),
+                    "content": """
+                        You are a student preference expansion engine.
+
+                        The student may describe their interests vaguely or in very few words.
+
+                        Expand the student's statement into a rich but accurate list of
+                        topics, activities, opportunities, events and related terms that
+                        should be considered relevant.
+
+                        Examples:
+
+                        "football"
+                        → football, soccer, football competitions, football tournaments,
+                        football matches, football team, football trials, football training,
+                        inter-college football, sports competitions
+
+                        "AI"
+                        → artificial intelligence, machine learning, deep learning,
+                        generative AI, LLM, NLP, computer vision, AI hackathons,
+                        AI workshops, AI projects, AI competitions
+
+                        "coding"
+                        → programming, software development, coding competitions,
+                        hackathons, competitive programming, programming workshops,
+                        developer events, software engineering
+
+                        Rules:
+                        - Preserve the student's actual intent.
+                        - Expand broad interests aggressively enough to avoid missing
+                        relevant opportunities.
+                        - Do NOT add unrelated career interests.
+                        - Do NOT invent specific organizations or events.
+                        - Return ONLY a comma-separated list of concepts and related terms.
+                        """,
                 },
                 {
                     "role": "user",
@@ -52,13 +79,17 @@ def create_preference_embedding(preferences: str) -> list[float]:
         if not normalized:
             normalized = preferences
 
-    except Exception:
+    except Exception as e:
+        print(f"Preference normalization failed: {e}")
         normalized = preferences
 
-    embedding_text = (
-        f"Student requirements and interests: {preferences}. "
-        f"Related concepts for matching: {normalized}"
-    )
+    embedding_text = f"""
+        Original student requirements:
+        {preferences}
+
+        Expanded matching concepts:
+        {normalized}
+    """
 
     return create_embedding(embedding_text)
 
