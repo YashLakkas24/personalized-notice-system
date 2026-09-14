@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./StudentLogin.css"
 
 const API_BASE = "http://127.0.0.1:8000";
 
@@ -21,8 +22,8 @@ export default function StudentLogin() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          student_id: studentId,
-          password,
+          student_id: studentId.trim(),
+          password: password,
         }),
       });
 
@@ -34,49 +35,78 @@ export default function StudentLogin() {
 
       window.location.href = `/student/${data.student.id}`;
     } catch (err) {
-      setError(err.message);
+      console.error("LOGIN ERROR:", err);
+      setError(err.message || "Unable to connect to server.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={handleLogin}>
-        <div className="login-icon">🎓</div>
+  <main className="student-login-page">
+    <div className="student-login-shell">
+
+      <a href="/" className="login-brand">
+        🤖 CampusNotice<span>.AI</span>
+      </a>
+
+      <form className="student-login-card" onSubmit={handleLogin}>
+
+        <div className="login-icon">
+          🎓
+        </div>
 
         <h1>Student Login</h1>
 
-        <p>Login to view your personalized notices.</p>
+        <p>
+          Sign in to access notices personalized for you.
+        </p>
 
-        <label>Student ID</label>
+        <label htmlFor="student-id">
+          Student ID
+        </label>
 
         <input
+          id="student-id"
           type="text"
-          placeholder="Enter student ID"
+          placeholder="e.g. student_1"
           value={studentId}
           onChange={(e) => setStudentId(e.target.value)}
           required
         />
 
-        <label>Password</label>
+        <label htmlFor="password">
+          Password
+        </label>
 
         <input
+          id="password"
           type="password"
-          placeholder="Enter password"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
 
-        {error && <div className="login-error">{error}</div>}
+        {error && (
+          <div className="login-error">
+            ⚠️ {error}
+          </div>
+        )}
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Signing in..." : "Sign In"}
+        <button
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign In →"}
         </button>
 
-        <a href="/">← Back to portal selection</a>
+        <a href="/" className="login-back">
+          ← Back to portal selection
+        </a>
+
       </form>
     </div>
-  );
+  </main>
+);
 }

@@ -5,6 +5,7 @@ import {
   markNotificationRead,
 } from "../api/notifications";
 import "./StudentDashboard.css";
+import { getStudentProfile, updateStudentPreferences } from "../api/student";
 
 export default function StudentDashboard({ studentId }) {
   const [loading, setLoading] = useState(true);
@@ -14,6 +15,10 @@ export default function StudentDashboard({ studentId }) {
   const [relevantNotices, setRelevantNotices] = useState([]);
   const [allNotices, setAllNotices] = useState([]);
 
+  const [preferences, setPreferences] = useState("");
+  const [savingPreferences, setSavingPreferences] = useState(false);
+  const [preferencesMessage, setPreferencesMessage] = useState("");
+
   const unreadCount = relevantNotices.filter(
     (notice) => notice.status === "UNREAD",
   ).length;
@@ -21,6 +26,17 @@ export default function StudentDashboard({ studentId }) {
   const urgentCount = relevantNotices.filter(
     (notice) => notice.priority === "CRITICAL" || notice.priority === "HIGH",
   ).length;
+
+  async function loadProfile() {
+    try {
+      const profile = await getStudentProfile(studentId);
+
+      setPreferences(profile.preferences || "");
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function loadNotices() {
     try {
       setLoading(true);
@@ -54,7 +70,7 @@ export default function StudentDashboard({ studentId }) {
 
   useEffect(() => {
     (async () => {
-      await loadNotices();
+      await Promise.all([loadNotices(), loadProfile()]);
     })();
   }, [studentId]);
 
@@ -81,6 +97,24 @@ export default function StudentDashboard({ studentId }) {
     }
   }
 
+  async function handleSavePreferences() {
+    try {
+      setSavingPreferences(true);
+      setPreferencesMessage("");
+
+      await updateStudentPreferences(studentId, preferences);
+
+      setPreferencesMessage("✓ Preferences saved. Your feed has been updated.");
+
+      await loadNotices();
+
+      setActiveTab("relevant");
+    } catch (err) {
+      setPreferencesMessage(err.message);
+    } finally {
+      setSavingPreferences(false);
+    }
+  }
   function getPriorityClass(priority) {
     switch (priority) {
       case "CRITICAL":
@@ -147,19 +181,32 @@ export default function StudentDashboard({ studentId }) {
           📋 All Notices
           <span>{allNotices.length}</span>
         </button>
+
+        <button
+          className={activeTab === "preferences" ? "active" : ""}
+          onClick={() => setActiveTab("preferences")}
+        >
+          ⚙️ My Preferences
+        </button>
       </div>
 
       {/* HEADER */}
       <div className="dashboard-header">
         <div>
           <h1>
-            {activeTab === "relevant" ? "Relevant Notices" : "All Notices"}
+            {activeTab === "relevant"
+              ? "Relevant Notices"
+              : activeTab === "all"
+                ? "All Notices"
+                : "My Preferences"}
           </h1>
 
           <p>
             {activeTab === "relevant"
               ? "Important information selected specifically for you."
-              : "All notices published by the administration."}
+              : activeTab === "all"
+                ? "All notices published by the administration."
+                : "Tell us what you're looking for so we can personalize your notices."}
           </p>
         </div>
 
@@ -201,6 +248,30 @@ export default function StudentDashboard({ studentId }) {
           </div>
         </div>
       </div>
+
+      {activeTab === "preferences" && (
+        <div className="preferences-card">
+          <h2>⚙️ My Preferences</h2>
+
+          <p>
+            Tell CampusNotice.AI what you're looking for. Your preferences are
+            used to personalize your notices.
+          </p>
+
+          <textarea
+            value={preferences}
+            onChange={(e) => setPreferences(e.target.value)}
+            placeholder="Example: I am interested in AI, machine learning, hackathons, software development and technical internships..."
+            rows={7}
+          />
+
+          <button onClick={handleSavePreferences} disabled={savingPreferences}>
+            {savingPreferences ? "Updating Feed..." : "Save Preferences"}
+          </button>
+
+          {preferencesMessage && <p>{preferencesMessage}</p>}
+        </div>
+      )}
 
       {/* ========================= */}
       {/* RELEVANT NOTICES */}
