@@ -369,7 +369,7 @@ def create_student(
     preference_embedding = None
 
     if preference_text:
-        preference_embedding = create_embedding(preference_text)
+        preference_embedding = create_preference_embedding(preference_text)
 
     interest_text = ", ".join(student_data.interests)
 
