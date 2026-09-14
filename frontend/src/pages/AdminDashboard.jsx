@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { uploadNoticeBatch } from "../api/notifications";
+import { uploadNoticeBatch, uploadTextNotice } from "../api/notifications";
 import "./AdminDashboard.css";
 
 export default function AdminDashboard() {
@@ -10,6 +10,8 @@ export default function AdminDashboard() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [noticeText, setNoticeText] = useState("");
+  const [textLoading, setTextLoading] = useState(false);
 
   function handleFiles(selectedFiles) {
     const validFiles = Array.from(selectedFiles).filter((file) => {
@@ -59,7 +61,39 @@ export default function AdminDashboard() {
   function removeFile(fileName) {
     setFiles((current) => current.filter((file) => file.name !== fileName));
   }
+  async function handleTextSubmit() {
+    if (!noticeText.trim()) {
+      setError("Please enter a notice.");
+      return;
+    }
 
+    setTextLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const data = await uploadTextNotice(noticeText);
+
+      setResult({
+        total_files: 1,
+        successful: 1,
+        failed: 0,
+        results: [
+          {
+            filename: "Text Notice",
+            status: "success",
+            title: data.notice?.title || "Notice processed successfully",
+          },
+        ],
+      });
+
+      setNoticeText("");
+    } catch (err) {
+      setError(err.message || "Text notice processing failed.");
+    } finally {
+      setTextLoading(false);
+    }
+  }
   async function handleUpload() {
     if (files.length === 0) {
       setError("Please select at least one notice.");
@@ -113,6 +147,43 @@ export default function AdminDashboard() {
 
         {/* UPLOAD */}
         <section className="upload-panel">
+          <div className="text-notice-panel">
+            <div className="text-notice-header">
+              <div>
+                <strong>Paste a Notice</strong>
+                <span>
+                  Quickly process raw notice text without uploading a file.
+                </span>
+              </div>
+            </div>
+
+            <textarea
+              value={noticeText}
+              onChange={(event) => setNoticeText(event.target.value)}
+              placeholder="Paste the raw college notice here..."
+              rows={7}
+            />
+
+            <button
+              type="button"
+              className="text-process-button"
+              onClick={handleTextSubmit}
+              disabled={textLoading || !noticeText.trim()}
+            >
+              {textLoading ? (
+                <>
+                  <span className="spinner" />
+                  Processing text...
+                </>
+              ) : (
+                <>✨ Process Text Notice</>
+              )}
+            </button>
+          </div>
+
+          <div className="upload-divider">
+            <span>OR UPLOAD FILES</span>
+          </div>
           <div
             className={`dropzone ${dragActive ? "drag-active" : ""}`}
             onDragEnter={(event) => {

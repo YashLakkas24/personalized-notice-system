@@ -1,480 +1,242 @@
-/* =========================================================
-   CAMPUSNOTICE.AI — LANDING PAGE
-   ========================================================= */
-
-.landing {
+.portal-page {
   min-height: 100vh;
-  color: #f8fafc;
-
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  
   background:
     radial-gradient(
-      circle at 50% -10%,
-      rgba(124, 58, 237, 0.24),
-      transparent 36%
+      circle at 50% 15%,
+      rgba(59, 130, 246, 0.14),
+      transparent 38%
     ),
     radial-gradient(
-      circle at 90% 45%,
-      rgba(37, 99, 235, 0.10),
+      circle at 15% 80%,
+      rgba(139, 92, 246, 0.10),
       transparent 30%
     ),
-    #080a0f;
-}
-
-/* =========================================================
-   NAVIGATION
-   ========================================================= */
-
-.landing-nav {
-  height: 72px;
-  max-width: 1180px;
-
-  margin: 0 auto;
-  padding: 0 28px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    #090b12;
 
   color: #f8fafc;
-  text-decoration: none;
-
-  font-size: 21px;
-  font-weight: 750;
 }
 
-.brand-logo {
-  font-size: 27px;
-}
-
-.brand-accent {
-  color: #a78bfa;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-links a,
-.nav-links button {
-  padding: 9px 14px;
-
-  border: 1px solid transparent;
-  border-radius: 9px;
-
-  background: transparent;
-
-  color: #9ca3af;
-
-  text-decoration: none;
-  font: inherit;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.nav-links a:hover,
-.nav-links button:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
-}
-
-/* =========================================================
-   HERO
-   ========================================================= */
-
-.hero {
-  max-width: 920px;
-
-  margin: 0 auto;
-  padding: 100px 24px 80px;
-
+.portal-container {
+  width: 100%;
+  max-width: 900px;
   text-align: center;
 }
 
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+/* =========================================
+   BRAND
+========================================= */
 
-  padding: 7px 13px;
-
-  border: 1px solid rgba(167, 139, 250, 0.25);
-  border-radius: 999px;
-
-  background: rgba(139, 92, 246, 0.08);
-
-  color: #c4b5fd;
-
-  font-size: 13px;
-  font-weight: 650;
+.portal-brand {
+  margin-bottom: 52px;
 }
 
-.hero h1 {
-  margin: 25px 0 20px;
 
-  color: #f8fafc;
+.portal-logo {
+  font-size: 48px;
+  margin-bottom: 12px;
 
-  font-size: clamp(44px, 7vw, 78px);
-  line-height: 0.98;
-
-  letter-spacing: -3.5px;
-
-  font-weight: 850;
+  filter: drop-shadow(0 0 18px rgba(96, 165, 250, 0.35));
 }
 
-.hero h1 span {
-  background: linear-gradient(
-    90deg,
-    #c4b5fd,
-    #60a5fa
-  );
-
-  -webkit-background-clip: text;
-  background-clip: text;
-
-  color: transparent;
-}
-
-.hero-copy {
-  max-width: 680px;
-
-  margin: 0 auto;
-
-  color: #9ca3af;
-
-  font-size: 17px;
-  line-height: 1.75;
-}
-
-/* =========================================================
-   ACTIONS
-   ========================================================= */
-
-.hero-actions {
-  margin-top: 34px;
-
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-
-  gap: 12px;
-
-  flex-wrap: wrap;
-}
-
-.primary-action {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  padding: 13px 18px;
-
-  border-radius: 11px;
-
-  background: linear-gradient(
-    135deg,
-    #7c3aed,
-    #2563eb
-  );
-
-  color: white;
-
-  text-decoration: none;
-
+.portal-brand h1 {
+  margin: 0;
+  font-size: 42px;
   font-weight: 700;
-
-  box-shadow:
-    0 10px 30px rgba(76, 29, 149, 0.25);
-
-  transition:
-    transform 0.2s ease,
-    filter 0.2s ease;
-}
-
-.primary-action:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
-}
-
-.student-launcher {
-  display: flex;
-
-  padding: 5px;
-
-  gap: 6px;
-
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 12px;
-
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.student-launcher select {
-  min-width: 190px;
-
-  padding: 0 9px;
-
-  border: none;
-  outline: none;
-
-  background: transparent;
-
+  letter-spacing: -1.5px;
   color: #f8fafc;
-
-  cursor: pointer;
 }
 
-.student-launcher option {
-  color: #111827;
+.portal-brand h1 span {
+  color: #60a5fa;
 }
 
-.student-launcher button {
-  padding: 10px 15px;
-
-  border: none;
-  border-radius: 9px;
-
-  background: #2563eb;
-
-  color: white;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
+.portal-brand p {
+  margin-top: 12px;
+  color: #94a3b8;
+  font-size: 16px;
 }
 
-.student-launcher button:hover {
-  background: #3b82f6;
-  transform: translateY(-1px);
-}
-
-/* =========================================================
-   FLOW
-   ========================================================= */
-
-.hero-flow {
-  max-width: 760px;
-
-  margin: 65px auto 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: #9ca3af;
-}
-
-.flow-step {
-  min-width: 140px;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 5px;
-}
-
-.flow-step strong {
-  color: #a78bfa;
-  font-size: 11px;
-  letter-spacing: 1px;
-}
-
-.flow-step span {
-  font-size: 13px;
-}
-
-.flow-line {
-  width: 90px;
-  height: 1px;
-
-  background: rgba(255, 255, 255, 0.10);
-}
-
-/* =========================================================
-   FEATURES
-   ========================================================= */
-
-.feature-section {
-  max-width: 1100px;
-
-  margin: 0 auto;
-
-  padding: 10px 24px 80px;
-}
-
-.section-heading {
-  margin-bottom: 25px;
-}
-
-.section-heading span {
-  color: #8b5cf6;
-
-  font-size: 11px;
-  font-weight: 750;
-
-  letter-spacing: 1.5px;
-}
-
-.section-heading h2 {
-  margin: 8px 0 0;
-
-  color: #f8fafc;
-
-  font-size: 26px;
-}
-
-.feature-grid {
+.portal-options {
   display: grid;
-
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 15px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
 }
 
-.feature-card {
-  padding: 25px;
+.portal-card {
+  position: relative;
 
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 17px;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
 
-  background: rgba(255, 255, 255, 0.035);
+  min-height: 125px;
+  box-sizing: border-box;
+
+  padding: 28px;
+
+  background: rgba(17, 24, 39, 0.82);
+
+  border: 1px solid #263247;
+  border-radius: 18px;
+
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+
+  cursor: pointer;
 
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.feature-card:hover {
+
+.portal-card:hover {
   transform: translateY(-4px);
 
-  border-color: rgba(167, 139, 250, 0.28);
+  background: rgba(23, 32, 50, 0.95);
 
-  background: rgba(255, 255, 255, 0.055);
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    0 0 25px rgba(59, 130, 246, 0.10);
 }
 
-.feature-icon {
-  width: 45px;
-  height: 45px;
+.portal-card-icon {
+  width: 54px;
+  height: 54px;
+
+  flex-shrink: 0;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
-  background: rgba(139, 92, 246, 0.10);
+  background: #172033;
+  border: 1px solid #293752;
 
-  font-size: 22px;
+  font-size: 26px;
 }
+.portal-card h2 {
+  margin: 2px 0 8px;
 
-.feature-card h3 {
-  margin: 18px 0 8px;
+  font-size: 20px;
+  font-weight: 650;
 
   color: #f8fafc;
-
-  font-size: 16px;
 }
 
-.feature-card p {
-  color: #9ca3af;
+.portal-card p {
+  margin: 0;
+
+  max-width: 280px;
+
+  color: #94a3b8;
 
   font-size: 14px;
-
-  line-height: 1.65;
+  line-height: 1.55;
 }
 
-/* =========================================================
-   FOOTER
-   ========================================================= */
+.portal-arrow {
+  position: absolute;
 
-.landing-footer {
-  max-width: 1100px;
+  right: 24px;
+  bottom: 22px;
 
-  margin: 0 auto;
-  padding: 22px 24px 30px;
+  font-size: 21px;
 
+  color: #60a5fa;
+
+  transition: transform 0.2s ease;
+}
+
+.portal-card:hover .portal-arrow {
+  transform: translateX(4px);
+}
+
+.portal-button {
+  position: absolute;
+
+  right: 20px;
+  bottom: 18px;
+
+  border: none;
+
+  background: transparent;
+
+  color: #60a5fa;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.portal-button:hover {
+  color: #93c5fd;
+}
+/* =========================================
+   FOOTER TAGLINE
+========================================= */
+
+.portal-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 32px;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin-top: 44px;
 
-  color: #6b7280;
+  color: #64748b;
 
-  font-size: 12px;
+  font-size: 13px;
 }
 
-/* =========================================================
+.portal-footer span:first-child {
+  color: #818cf8;
+}
+
+.portal-footer span:nth-child(2) {
+  color: #60a5fa;
+}
+
+.portal-footer span:last-child {
+  color: #94a3b8;
+}
+
+/* =========================================
    MOBILE
-   ========================================================= */
+========================================= */
 
-@media (max-width: 700px) {
-  .landing-nav {
-    padding: 0 16px;
+@media (max-width: 650px) {
+  .portal-page {
+    padding: 30px 16px;
   }
 
-  .nav-links a {
-    display: none;
-  }
-
-  .hero {
-    padding-top: 70px;
-  }
-
-  .hero h1 {
-    letter-spacing: -2px;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-  }
-
-  .primary-action {
-    justify-content: center;
-  }
-
-  .student-launcher {
-    width: 100%;
-  }
-
-  .student-launcher select {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .hero-flow {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .flow-line {
-    width: 1px;
-    height: 25px;
-  }
-
-  .feature-grid {
+  .portal-options {
     grid-template-columns: 1fr;
   }
 
-  .landing-footer {
+  .portal-brand h1 {
+    font-size: 32px;
+  }
+
+  .portal-brand {
+    margin-bottom: 38px;
+  }
+
+  .portal-footer {
     flex-direction: column;
-    gap: 6px;
+    gap: 7px;
   }
 }

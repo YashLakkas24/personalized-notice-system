@@ -82,3 +82,21 @@ export async function uploadNoticeBatch(files) {
 
   return response.json();
 }
+
+export async function uploadTextNotice(text) {
+  const formData = new FormData();
+
+  formData.append("text", text);
+
+  const response = await fetch(`${API_BASE}/api/admin/notice/text`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Text notice processing failed");
+  }
+
+  return response.json();
+}
