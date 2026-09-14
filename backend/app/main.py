@@ -91,16 +91,10 @@ def process_notice_in_background(
         notice, notifications, routing_report = process_notice_workflow(
             db=db,
             raw_text=raw_text,
+            pdf_url=pdf_url,
         )
 
-        # Attach original PDF to the newly created notice
-        if pdf_url:
-            notice.pdf_url = pdf_url
-            db.commit()
-            db.refresh(notice)
-
         print(f"Notice processed: {notice.title}")
-
         print(f"Routing report: {routing_report}")
 
     except Exception as e:
@@ -562,10 +556,6 @@ async def upload_notice_batch(
                 db=db,
                 raw_text=extracted_text,
             )
-
-            notice.pdf_url = pdf_url
-            db.commit()
-            db.refresh(notice)
 
             results.append(
                 {
