@@ -119,6 +119,17 @@ export default function StudentDashboard({ studentId }) {
 
   return (
     <div className="student-dashboard">
+      {/* TOP NAVIGATION */}
+      <div className="student-topbar">
+        <div className="student-brand">
+          🤖 CampusNotice<span>.AI</span>
+        </div>
+
+        <a href="/" className="student-home-link">
+          ← Home
+        </a>
+      </div>
+
       {/* TABS */}
       <div className="notice-tabs">
         <button

@@ -524,7 +524,83 @@
 
   cursor: pointer;
 }
+/* =========================================
+   STUDENT TOP BAR
+   ========================================= */
 
+.student-topbar {
+  width: 100%;
+
+  margin: 0 0 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-sizing: border-box;
+}
+
+.student-brand {
+  font-size: 20px;
+  font-weight: 700;
+
+  letter-spacing: -0.4px;
+
+  color: #f8fafc;
+}
+
+.student-brand span {
+  color: #60a5fa;
+}
+
+/* =========================================
+   HOME BUTTON
+========================================= */
+
+.student-home-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 9px 16px;
+
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 9px;
+
+  background: rgba(30, 27, 75, 0.45);
+
+  color: #a78bfa;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.student-home-link:hover {
+  background: rgba(99, 102, 241, 0.15);
+
+  border-color: #6366f1;
+
+  color: #c4b5fd;
+
+  transform: translateX(-2px);
+
+  box-shadow:
+    0 5px 18px rgba(99, 102, 241, 0.12);
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+ 
 /* =========================================================
    MOBILE
    ========================================================= */
