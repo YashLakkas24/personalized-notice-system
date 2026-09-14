@@ -69,7 +69,9 @@ def evaluate_student_for_notice(
     # 4. SEMANTIC MATCHING
     # ========================================================
 
-    student_embedding = student.get("interest_embedding")
+    student_embedding = student.get("interest_embedding") or student.get(
+        "preference_embedding"
+    )
 
     notice_embedding = notice.get("notice_embedding")
 
@@ -98,14 +100,14 @@ def evaluate_student_for_notice(
         level = "HIGH"
         routing = "NOTIFY"
 
-        reason = "Strong semantic match with " "the student's interests."
+        reason = "Strong semantic match with " "the student's preferences."
 
     elif score >= MEDIUM_RELEVANCE:
 
         level = "MEDIUM"
         routing = "NOTIFY"
 
-        reason = "Moderate semantic match with " "the student's interests."
+        reason = "Moderate semantic match with " "the student's preferences."
 
     else:
 

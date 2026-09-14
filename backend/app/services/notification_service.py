@@ -28,7 +28,7 @@ def route_notice_to_students(
     mandatory_count = 0
 
     for student_record in students:
-        
+
         students_evaluated += 1
         # Convert SQLAlchemy model -> dictionary
         student = {
@@ -36,6 +36,9 @@ def route_notice_to_students(
             "name": student_record.name,
             "year": student_record.year,
             "branch": student_record.branch,
+            "preferences": student_record.preferences or "",
+            "preference_embedding": student_record.preference_embedding,
+            # compatibility
             "interests": student_record.interests or [],
             "interest_embedding": student_record.interest_embedding,
         }
@@ -131,3 +134,87 @@ def route_notice_to_students(
     }
 
     return created, routing_report
+
+
+def refresh_student_notifications(
+    db: Session,
+    student: Student,
+):
+    """
+    Recalculate one student's notifications
+    against all existing notices.
+    """
+
+    notices = db.query(Notice).all()
+
+    student_data = {
+        "id": student.id,
+        "name": student.name,
+        "year": student.year,
+        "branch": student.branch,
+        "preferences": student.preferences or "",
+        "preference_embedding": student.preference_embedding,
+        # compatibility
+        "interests": student.interests or [],
+        "interest_embedding": student.interest_embedding,
+    }
+
+    for notice in notices:
+        notice_data = {
+            "id": notice.id,
+            "title": notice.title,
+            "category": notice.category,
+            "is_mandatory": notice.is_mandatory,
+            "eligibility": notice.eligibility or {},
+            "deadline": notice.deadline,
+            "registration_link": notice.registration_link,
+            "required_action": notice.required_action,
+            "importance": notice.importance,
+            "summary": notice.summary,
+            "notice_embedding": notice.notice_embedding,
+        }
+
+    evaluation = evaluate_student_for_notice(
+        student_data,
+        notice_data,
+    )
+
+    existing = (
+        db.query(Notification)
+        .filter(
+            Notification.student_id == student.id, Notification.notice_id == notice.id
+        )
+        .first()
+    )
+
+    should_notify = evaluation["routing"] in {"NOTIFY", "MUST_NOTIFY"}
+
+    # Relevant now → create/update
+    if should_notify and existing:
+        existing.relevance_score = evaluation["relevance_score"]
+        existing.priority = evaluation["priority"]
+        existing.urgency = evaluation["urgency"]
+        existing.days_left = evaluation["days_left"]
+        existing.reason = evaluation["reason"]
+
+    elif should_notify and not existing:
+        db.add(
+            Notification(
+                id=str(uuid.uuid4()),
+                student_id=student.id,
+                notice_id=notice.id,
+                relevance_score=evaluation["relevance_score"],
+                priority=evaluation["priority"],
+                urgency=evaluation["urgency"],
+                days_left=evaluation["days_left"],
+                reason=evaluation["reason"],
+                status="UNREAD",
+            )
+        )
+
+    # No longer relevant → remove from personalized feed
+    elif not should_notify and existing:
+
+        db.delete(existing)
+
+    db.commit()

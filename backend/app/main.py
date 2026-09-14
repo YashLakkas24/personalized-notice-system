@@ -55,16 +55,20 @@ app.add_middleware(
 
 class StudentProfileCreate(BaseModel):
     id: str
-    password: str
     name: str
     year: int
     branch: str
-    interests: List[str]
+    interests: List[str] = []
+    preferences: str = ""
 
 
-class Student(BaseModel):
+class StudentLogin(BaseModel):
     student_id: str
     password: str
+
+
+class StudentPreferencesUpdate(BaseModel):
+    preferences: str
 
 
 def process_notice_in_background(raw_text: str):
@@ -105,6 +109,8 @@ def read_root():
 # ============================================================
 # STUDENT LOGIN
 # ============================================================
+
+
 @app.post("/api/student/login")
 def student_login(
     login_data: StudentLogin,
@@ -116,7 +122,7 @@ def student_login(
         raise HTTPException(status_code=401, detail="Invalid student ID or password.")
 
     return {
-        "message": "Login successful",
+        "message": "Login successful.",
         "student": {
             "id": student.id,
             "name": student.name,
@@ -305,6 +311,18 @@ def create_student(
     student_data: StudentProfileCreate,
     db: Session = Depends(get_db),
 ):
+    preference_text = student_data.preferences.strip()
+
+    if not preference_text and student_data.interests:
+        preference_text = ", ".join(student_data.interests)
+
+    preference_embedding = None
+
+    if preference_text:
+        preference_embedding = create_embedding(
+            f"Student preferences:{preference_text}"
+        )
+
     interest_text = ", ".join(student_data.interests)
 
     interest_embedding = create_embedding(f"Student interest:{interest_text}")
@@ -320,11 +338,13 @@ def create_student(
     student = Student(
         id=student_data.id,
         name=student_data.name,
-        password=student_data.password,
         year=student_data.year,
         branch=student_data.branch,
+        preferences=preference_text,
+        preference_embedding=preference_embedding,
+        # compatibility
         interests=student_data.interests,
-        interest_embedding=interest_embedding,
+        interest_embedding=preference_embedding,
     )
 
     db.add(student)
@@ -332,6 +352,75 @@ def create_student(
     db.refresh(student)
 
     return student
+
+
+# ============================================================
+# STUDENT PREFERENCES
+# ============================================================
+
+
+@app.get("/api/student/{student_id}/profile")
+def get_student_profile(student_id: str, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.id == student_id).first()
+
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    return {
+        "id": student.id,
+        "name": student.name,
+        "year": student.year,
+        "branch": student.branch,
+        "preferences": student.preferences or "",
+    }
+
+
+@app.post("/api/student/{student_id}/profile")
+def update_student_profile(
+    student_id: str,
+    profile: StudentPreferencesUpdate,
+    db: Session = Depends(get_db),
+):
+    student = db.query(Student).filter(Student.id == student_id).first()
+
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    preferences = profile.preferences.strip()
+
+    if not preferences:
+        raise HTTPException(status_code=400, detail="Preferences cannot be empty.")
+
+    # Save requirement
+    student.preferences = preferences
+
+    # Generate new embedding
+    student.preference_embedding = create_embedding(
+        f"Student preferences:{preferences}"
+    )
+
+    # Keep old fields synchronized
+    student.interests = [preferences]
+    student.interest_embedding = student.preference_embedding
+
+    db.commit()
+    db.refresh(student)
+
+    # Recalculate this student's feed
+    from app.services.notification_service import refresh_student_notifications
+
+    refresh_student_notifications(db, student)
+
+    return {
+        "message": "Preferences saved and feed updated.",
+        "student": {
+            "id": student.id,
+            "name": student.name,
+            "year": student.year,
+            "branch": student.branch,
+            "preferences": student.preferences,
+        },
+    }
 
 
 # ============================================================
