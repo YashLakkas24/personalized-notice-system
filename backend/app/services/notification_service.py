@@ -154,7 +154,7 @@ def refresh_student_notifications(
         "branch": student.branch,
         "preferences": student.preferences or "",
         "preference_embedding": student.preference_embedding,
-        # compatibility
+        # compatibility only
         "interests": student.interests or [],
         "interest_embedding": student.interest_embedding,
     }
@@ -182,7 +182,8 @@ def refresh_student_notifications(
         existing = (
             db.query(Notification)
             .filter(
-                Notification.student_id == student.id, Notification.notice_id == notice.id
+                Notification.student_id == student.id,
+                Notification.notice_id == notice.id,
             )
             .first()
         )

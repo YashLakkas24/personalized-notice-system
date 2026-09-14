@@ -69,8 +69,8 @@ def evaluate_student_for_notice(
     # 4. SEMANTIC MATCHING
     # ========================================================
 
-    student_embedding = student.get("interest_embedding") or student.get(
-        "preference_embedding"
+    student_embedding = student.get("preference_embedding") or student.get(
+        "interest_embedding"
     )
 
     notice_embedding = notice.get("notice_embedding")
