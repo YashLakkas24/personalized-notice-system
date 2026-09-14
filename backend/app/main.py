@@ -22,7 +22,10 @@ from app.database import get_db, SessionLocal
 from app.models.student import Student
 from app.models.notice import Notice
 
-from app.services.embedding_service import create_embedding
+from app.services.embedding_service import (
+    create_embedding,
+    create_preference_embedding,
+)
 from app.models.notification import Notification
 from app.services.notice_workflow import process_notice_workflow
 import os
@@ -366,9 +369,7 @@ def create_student(
     preference_embedding = None
 
     if preference_text:
-        preference_embedding = create_embedding(
-            f"Student preferences:{preference_text}"
-        )
+        preference_embedding = create_embedding(preference_text)
 
     interest_text = ", ".join(student_data.interests)
 
@@ -442,9 +443,7 @@ def update_student_profile(
     student.preferences = preferences
 
     # Generate new embedding
-    student.preference_embedding = create_embedding(
-        f"Student preferences:{preferences}"
-    )
+    student.preference_embedding = create_preference_embedding(preferences)
 
     # Keep old fields synchronized
     student.interests = [preferences]
