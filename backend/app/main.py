@@ -74,7 +74,6 @@ class StudentProfileCreate(BaseModel):
     name: str
     year: int
     branch: str
-    # preferences: str = ""
 
 
 class StudentLogin(BaseModel):
@@ -363,20 +362,6 @@ def create_student(
     student_data: StudentProfileCreate,
     db: Session = Depends(get_db),
 ):
-    preference_text = student_data.preferences.strip()
-
-    if not preference_text:
-        raise HTTPException(
-            status_code=400,
-            detail="Student requirements/preferences cannot be empty.",
-        )
-
-    preference_embedding = create_preference_embedding(preference_text)
-
-    interest_text = ", ".join(student_data.interests)
-
-    interest_embedding = create_embedding(f"Student interest:{interest_text}")
-
     existing_student = db.query(Student).filter(Student.id == student_data.id).first()
 
     if existing_student:
@@ -390,18 +375,28 @@ def create_student(
         name=student_data.name,
         year=student_data.year,
         branch=student_data.branch,
+        # Student fills this later
+        # from Student Portal.
         preferences="",
         preference_embedding=None,
-        # compatibility
-        interests=student_data.interests,
-        interest_embedding=preference_embedding,
+        # Compatibility with existing DB schema
+        interests=[],
+        interest_embedding=None,
     )
 
     db.add(student)
     db.commit()
     db.refresh(student)
 
-    return student
+    return {
+        "message": "Student created successfully.",
+        "student": {
+            "id": student.id,
+            "name": student.name,
+            "year": student.year,
+            "branch": student.branch,
+        },
+    }
 
 
 # ============================================================
