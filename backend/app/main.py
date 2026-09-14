@@ -55,10 +55,16 @@ app.add_middleware(
 
 class StudentProfileCreate(BaseModel):
     id: str
+    password: str
     name: str
     year: int
     branch: str
     interests: List[str]
+
+
+class Student(BaseModel):
+    student_id: str
+    password: str
 
 
 def process_notice_in_background(raw_text: str):
@@ -93,6 +99,30 @@ def read_root():
         "agent_framework": "Strands Agents SDK",
         "model_provider": "OpenAI",
         "database": "PostgreSQL",
+    }
+
+
+# ============================================================
+# STUDENT LOGIN
+# ============================================================
+@app.post("/api/student/login")
+def student_login(
+    login_data: StudentLogin,
+    db: Session = Depends(get_db),
+):
+    student = db.query(Student).filter(Student.id == login_data.student_id).first()
+
+    if not student or student.password != login_data.password:
+        raise HTTPException(status_code=401, detail="Invalid student ID or password.")
+
+    return {
+        "message": "Login successful",
+        "student": {
+            "id": student.id,
+            "name": student.name,
+            "year": student.year,
+            "branch": student.branch,
+        },
     }
 
 
@@ -290,6 +320,7 @@ def create_student(
     student = Student(
         id=student_data.id,
         name=student_data.name,
+        password=student_data.password,
         year=student_data.year,
         branch=student_data.branch,
         interests=student_data.interests,

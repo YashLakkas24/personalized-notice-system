@@ -9,6 +9,8 @@ class Student(Base):
 
     id = Column(String, primary_key=True)
 
+    password = Column(String, nullable=False)
+
     name = Column(String, nullable=False)
 
     year = Column(Integer, nullable=False)
