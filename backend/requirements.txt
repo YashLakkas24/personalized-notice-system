@@ -4,8 +4,8 @@ python-multipart==0.0.9
 python-dotenv==1.0.1
 pypdf==4.1.0
 
-strands-agents[openai]
-strands-agents-tools
+strands-agents[openai]==1.55.1
+strands-agents-tools==0.8.8
 openai>=2.0.0
 sqlalchemy
 psycopg2-binary
