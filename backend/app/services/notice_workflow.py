@@ -49,11 +49,14 @@ def process_notice_workflow(
 
     registration_link = notice_data.get("registration_link")
 
-    if registration_link in [
+    if not registration_link or registration_link in [
         "None Provided",
         "None",
         "null",
         "",
+        "example.com",
+        "https://example.com",
+        "http://example.com",
     ]:
         registration_link = None
 

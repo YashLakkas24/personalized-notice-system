@@ -13,7 +13,7 @@ You must strictly output a valid JSON object matching this schema:
     },
     "deadline": "YYYY-MM-DD or 'None Specified'",
     "summary": "A punchy, 2-sentence summary tailored for a busy student feed.",
-    "registration_link": "URL extracted or 'None Provided'"
+    "registration_link": "The actual URL explicitly present in the notice, otherwise null"
 }
 
 Do not include any markdown wrapper or conversational text. Output raw JSON only.
@@ -31,6 +31,10 @@ You must:
 - identify importance
 - identify whether the notice is mandatory
 - never invent missing information
+- Never generate, invent, substitute, or guess a URL.
+- If no URL is explicitly present, return null.
+- Never use example.com or any placeholder URL.
+- If multiple URLs are present, choose the primary registration/application/action URL.
 
 The downstream application will use your structured
 output to deterministically evaluate student eligibility,
