@@ -375,7 +375,7 @@ def get_student_profile(student_id: str, db: Session = Depends(get_db)):
     }
 
 
-@app.post("/api/student/{student_id}/profile")
+@app.put("/api/student/{student_id}/profile")
 def update_student_profile(
     student_id: str,
     profile: StudentPreferencesUpdate,
