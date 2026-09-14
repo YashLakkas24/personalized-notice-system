@@ -15,7 +15,7 @@ def create_embedding(text: str) -> list[float]:
     return response.data[0].embedding
 
 
-PREFERENCE_NORMALIZATION_MODEL = "gpt-4o"
+PREFERENCE_NORMALIZATION_MODEL = "gpt-4o-mini"
 
 
 def create_preference_embedding(preferences: str) -> list[float]:

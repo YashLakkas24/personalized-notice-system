@@ -11,7 +11,7 @@ model = OpenAIModel(
     client_args={
         "api_key": os.getenv("OPENAI_API_KEY"),
     },
-    model_id="gpt-4o",
+    model_id="gpt-4o-mini",
     params={
         "temperature": 0.1,
         "max_tokens": 1000,
