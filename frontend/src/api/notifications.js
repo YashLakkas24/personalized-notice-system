@@ -9,6 +9,24 @@ export async function getAllNotices() {
   return response.json();
 }
 
+export async function createStudent(student) {
+  const response = await fetch(`${API_BASE}/api/students`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(student),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Failed to create student");
+  }
+
+  return data;
+}
+
 export async function getStudentNotifications(studentId) {
   const response = await fetch(
     `${API_BASE}/api/student/${studentId}/notifications`,

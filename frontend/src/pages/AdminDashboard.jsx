@@ -1,5 +1,9 @@
 import { useRef, useState } from "react";
-import { uploadNoticeBatch, uploadTextNotice } from "../api/notifications";
+import {
+  uploadNoticeBatch,
+  uploadTextNotice,
+  createStudent,
+} from "../api/notifications";
 import "./AdminDashboard.css";
 
 export default function AdminDashboard() {
@@ -12,6 +16,16 @@ export default function AdminDashboard() {
   const [dragActive, setDragActive] = useState(false);
   const [noticeText, setNoticeText] = useState("");
   const [textLoading, setTextLoading] = useState(false);
+  const [student, setStudent] = useState({
+    id: "",
+    name: "",
+    year: "",
+    branch: "",
+    preferences: "",
+  });
+
+  const [studentLoading, setStudentLoading] = useState(false);
+  const [studentMessage, setStudentMessage] = useState("");
 
   function handleFiles(selectedFiles) {
     const validFiles = Array.from(selectedFiles).filter((file) => {
@@ -60,6 +74,35 @@ export default function AdminDashboard() {
 
   function removeFile(fileName) {
     setFiles((current) => current.filter((file) => file.name !== fileName));
+  }
+
+  async function handleCreateStudent(event) {
+    event.preventDefault();
+
+    setStudentLoading(true);
+    setStudentMessage("");
+    setError("");
+
+    try {
+      await createStudent({
+        ...student,
+        year: Number(student.year),
+      });
+
+      setStudentMessage(`Student ${student.name} created successfully.`);
+
+      setStudent({
+        id: "",
+        name: "",
+        year: "",
+        branch: "",
+        preferences: "",
+      });
+    } catch (err) {
+      setError(err.message || "Failed to create student.");
+    } finally {
+      setStudentLoading(false);
+    }
   }
   async function handleTextSubmit() {
     if (!noticeText.trim()) {
@@ -144,7 +187,112 @@ export default function AdminDashboard() {
             ← Home
           </a>
         </header>
+        <section className="student-create-panel">
+          <div className="student-create-header">
+            <div>
+              <strong>Create Student Profile</strong>
+              <span>
+                Add the student's academic details and notice requirements.
+              </span>
+            </div>
+          </div>
 
+          <form onSubmit={handleCreateStudent} className="student-create-form">
+            <div className="form-row">
+              <div className="form-field">
+                <label>Student ID</label>
+                <input
+                  type="text"
+                  placeholder="e.g. student_7"
+                  value={student.id}
+                  onChange={(e) =>
+                    setStudent({ ...student, id: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rahul Patil"
+                  value={student.name}
+                  onChange={(e) =>
+                    setStudent({ ...student, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-field">
+                <label>Year</label>
+                <select
+                  value={student.year}
+                  onChange={(e) =>
+                    setStudent({ ...student, year: e.target.value })
+                  }
+                  required
+                >
+                  <option value="">Select year</option>
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                </select>
+              </div>
+
+              <div className="form-field">
+                <label>Branch</label>
+                <input
+                  type="text"
+                  placeholder="e.g. CSE / AI-ML"
+                  value={student.branch}
+                  onChange={(e) =>
+                    setStudent({ ...student, branch: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-field">
+              <label>Requirements & Preferences</label>
+
+              <textarea
+                rows={5}
+                placeholder="Example: I am interested in football competitions, hackathons and AI events. I want opportunities related to machine learning."
+                value={student.preferences}
+                onChange={(e) =>
+                  setStudent({
+                    ...student,
+                    preferences: e.target.value,
+                  })
+                }
+                required
+              />
+
+              <span className="field-hint">
+                These requirements are used by AI to personalize the student's
+                notices.
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              className="student-create-button"
+              disabled={studentLoading}
+            >
+              {studentLoading ? "Creating..." : "＋ Create Student"}
+            </button>
+
+            {studentMessage && (
+              <div className="student-success">✓ {studentMessage}</div>
+            )}
+          </form>
+        </section>
         {/* UPLOAD */}
         <section className="upload-panel">
           <div className="text-notice-panel">

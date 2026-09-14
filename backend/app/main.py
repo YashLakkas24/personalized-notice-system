@@ -74,8 +74,7 @@ class StudentProfileCreate(BaseModel):
     name: str
     year: int
     branch: str
-    interests: List[str] = []
-    preferences: str = ""
+    # preferences: str = ""
 
 
 class StudentLogin(BaseModel):
@@ -366,13 +365,13 @@ def create_student(
 ):
     preference_text = student_data.preferences.strip()
 
-    if not preference_text and student_data.interests:
-        preference_text = ", ".join(student_data.interests)
+    if not preference_text:
+        raise HTTPException(
+            status_code=400,
+            detail="Student requirements/preferences cannot be empty.",
+        )
 
-    preference_embedding = None
-
-    if preference_text:
-        preference_embedding = create_preference_embedding(preference_text)
+    preference_embedding = create_preference_embedding(preference_text)
 
     interest_text = ", ".join(student_data.interests)
 
@@ -391,8 +390,8 @@ def create_student(
         name=student_data.name,
         year=student_data.year,
         branch=student_data.branch,
-        preferences=preference_text,
-        preference_embedding=preference_embedding,
+        preferences="",
+        preference_embedding=None,
         # compatibility
         interests=student_data.interests,
         interest_embedding=preference_embedding,
