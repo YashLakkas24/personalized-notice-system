@@ -4,8 +4,8 @@ from app.services.eligibility_engine import check_eligibility
 from app.services.embedding_service import cosine_similarity
 from app.services.priority_engine import calculate_priority
 
-HIGH_RELEVANCE = 0.75
-MEDIUM_RELEVANCE = 0.55
+HIGH_RELEVANCE = 0.65
+MEDIUM_RELEVANCE = 0.50
 
 
 def evaluate_student_for_notice(
@@ -88,6 +88,12 @@ def evaluate_student_for_notice(
         }
 
     score = cosine_similarity(student_embedding, notice_embedding)
+
+    print(
+        f"[MATCH] Student={student.get('id')} "
+        f"Notice={notice.get('title')} "
+        f"Score={score:.4f}"
+    )
 
     score = max(0.0, min(1.0, score))
 
