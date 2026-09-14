@@ -338,6 +338,21 @@ export default function StudentDashboard({ studentId }) {
                   <p>{notification.reason}</p>
                 </div>
 
+                {notification.pdf_url && (
+                  <a
+                    href={`http://127.0.0.1:8000${notification.pdf_url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="view-notice-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNotificationOpen(notification);
+                    }}
+                  >
+                    📄 View Original Notice
+                  </a>
+                )}
+
                 <div className="notification-actions">
                   {notification.registration_link && (
                     <a

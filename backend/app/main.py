@@ -301,6 +301,18 @@ async def upload_image_notice(
 
         image_bytes = await file.read()
 
+        upload_dir = "uploads/notices"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        extension = file.filename.split(".")[-1].lower()
+        image_filename = f"{uuid.uuid4()}.{extension}"
+        image_path = os.path.join(upload_dir, image_filename)
+
+        with open(image_path, "wb") as f:
+            f.write(image_bytes)
+
+        image_url = f"/uploads/notices/{image_filename}"
+
         image = Image.open(BytesIO(image_bytes))
 
         # ------------------------------------------
@@ -322,6 +334,7 @@ async def upload_image_notice(
         background_tasks.add_task(
             process_notice_in_background,
             extracted_text,
+            image_url
         )
 
         return {"message": "Image accepted for background processing."}
