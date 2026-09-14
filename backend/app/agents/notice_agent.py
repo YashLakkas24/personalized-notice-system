@@ -2,7 +2,7 @@ import os
 
 from strands import Agent, tool
 from dotenv import load_dotenv
-from strands.models.openai import OpenAIModel
+from strands.models import OpenAIModel
 
 from app.agents.prompts import NOTICE_SYSTEM_PROMPT
 from app.schemas.notice import NoticeMetadata
