@@ -340,7 +340,7 @@ export default function StudentDashboard({ studentId }) {
 
                 {notification.pdf_url && (
                   <a
-                    href={`http://127.0.0.1:8000${notification.pdf_url}`}
+                    href={`${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000"}${notification.pdf_url}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="view-notice-btn"
@@ -410,7 +410,7 @@ export default function StudentDashboard({ studentId }) {
 
                 {notice.pdf_url && (
                   <a
-                    href={`http://127.0.0.1:8000${notice.pdf_url}`}
+                    href={`${import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000"}${notice.pdf_url}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="view-notice-btn"

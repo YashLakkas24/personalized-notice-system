@@ -232,7 +232,7 @@ async def upload_pdf_notice(
 
                 images = convert_from_bytes(
                     pdf_bytes,
-                    poppler_path=r"C:\Program Files\poppler-26.07.0\Library\bin",
+                    poppler_path=POPPLER_PATH or None,
                 )
 
                 ocr_text = []
@@ -534,7 +534,7 @@ async def upload_notice_batch(
 
                     images = convert_from_bytes(
                         file_bytes,
-                        poppler_path=r"C:\Program Files\poppler-26.07.0\Library\bin",
+                        poppler_path=POPPLER_PATH or None,
                     )
 
                     ocr_text = []
