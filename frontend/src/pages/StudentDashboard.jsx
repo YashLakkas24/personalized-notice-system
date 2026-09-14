@@ -251,25 +251,51 @@ export default function StudentDashboard({ studentId }) {
 
       {activeTab === "preferences" && (
         <div className="preferences-card">
-          <h2>⚙️ My Preferences</h2>
+          <div className="preferences-header">
+            <div className="preferences-icon">⚙️</div>
 
-          <p>
-            Tell CampusNotice.AI what you're looking for. Your preferences are
-            used to personalize your notices.
-          </p>
+            <div>
+              <h2>My Preferences</h2>
+              <p>
+                Tell CampusNotice.AI what you're looking for. Your preferences
+                help AI personalize your notice feed.
+              </p>
+            </div>
+          </div>
 
-          <textarea
-            value={preferences}
-            onChange={(e) => setPreferences(e.target.value)}
-            placeholder="Example: I am interested in AI, machine learning, hackathons, software development and technical internships..."
-            rows={7}
-          />
+          <div className="preferences-input-section">
+            <label htmlFor="preferences">
+              What notices are relevant to you?
+            </label>
 
-          <button onClick={handleSavePreferences} disabled={savingPreferences}>
-            {savingPreferences ? "Updating Feed..." : "Save Preferences"}
-          </button>
+            <textarea
+              id="preferences"
+              value={preferences}
+              onChange={(e) => setPreferences(e.target.value)}
+              placeholder="Example: I am interested in football competitions, tournaments, team trials and football training programs."
+              rows={6}
+            />
 
-          {preferencesMessage && <p>{preferencesMessage}</p>}
+            <div className="preferences-hint">
+              💡 Be specific. Mention topics, activities, competitions,
+              opportunities or events you want to see.
+            </div>
+          </div>
+
+          <div className="preferences-footer">
+            <span>🤖 AI will use this description to match notices.</span>
+
+            <button
+              onClick={handleSavePreferences}
+              disabled={savingPreferences}
+            >
+              {savingPreferences ? "Updating Feed..." : "Save Preferences →"}
+            </button>
+          </div>
+
+          {preferencesMessage && (
+            <div className="preferences-message">{preferencesMessage}</div>
+          )}
         </div>
       )}
 
