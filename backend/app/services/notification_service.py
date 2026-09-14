@@ -174,47 +174,47 @@ def refresh_student_notifications(
             "notice_embedding": notice.notice_embedding,
         }
 
-    evaluation = evaluate_student_for_notice(
-        student_data,
-        notice_data,
-    )
-
-    existing = (
-        db.query(Notification)
-        .filter(
-            Notification.student_id == student.id, Notification.notice_id == notice.id
+        evaluation = evaluate_student_for_notice(
+            student_data,
+            notice_data,
         )
-        .first()
-    )
 
-    should_notify = evaluation["routing"] in {"NOTIFY", "MUST_NOTIFY"}
-
-    # Relevant now → create/update
-    if should_notify and existing:
-        existing.relevance_score = evaluation["relevance_score"]
-        existing.priority = evaluation["priority"]
-        existing.urgency = evaluation["urgency"]
-        existing.days_left = evaluation["days_left"]
-        existing.reason = evaluation["reason"]
-
-    elif should_notify and not existing:
-        db.add(
-            Notification(
-                id=str(uuid.uuid4()),
-                student_id=student.id,
-                notice_id=notice.id,
-                relevance_score=evaluation["relevance_score"],
-                priority=evaluation["priority"],
-                urgency=evaluation["urgency"],
-                days_left=evaluation["days_left"],
-                reason=evaluation["reason"],
-                status="UNREAD",
+        existing = (
+            db.query(Notification)
+            .filter(
+                Notification.student_id == student.id, Notification.notice_id == notice.id
             )
+            .first()
         )
 
-    # No longer relevant → remove from personalized feed
-    elif not should_notify and existing:
+        should_notify = evaluation["routing"] in {"NOTIFY", "MUST_NOTIFY"}
 
-        db.delete(existing)
+        # Relevant now → create/update
+        if should_notify and existing:
+            existing.relevance_score = evaluation["relevance_score"]
+            existing.priority = evaluation["priority"]
+            existing.urgency = evaluation["urgency"]
+            existing.days_left = evaluation["days_left"]
+            existing.reason = evaluation["reason"]
+
+        elif should_notify and not existing:
+            db.add(
+                Notification(
+                    id=str(uuid.uuid4()),
+                    student_id=student.id,
+                    notice_id=notice.id,
+                    relevance_score=evaluation["relevance_score"],
+                    priority=evaluation["priority"],
+                    urgency=evaluation["urgency"],
+                    days_left=evaluation["days_left"],
+                    reason=evaluation["reason"],
+                    status="UNREAD",
+                )
+            )
+
+        # No longer relevant → remove from personalized feed
+        elif not should_notify and existing:
+
+            db.delete(existing)
 
     db.commit()
