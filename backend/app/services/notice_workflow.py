@@ -98,27 +98,49 @@ def process_notice_workflow(
     db.commit()
     db.refresh(notice)
 
-    # --------------------------------------------------
-    # 5. Route notice
-    # --------------------------------------------------
-    notifications, routing_report = route_notice_to_students(db, notice)
+    # # --------------------------------------------------
+    # # 5. Route notice
+    # # --------------------------------------------------
+    # notifications, routing_report = route_notice_to_students(db, notice)
 
-    # --------------------------------------------------
-    # 6. Agent orchestration / audit
-    # --------------------------------------------------
+    # # --------------------------------------------------
+    # # 6. Agent orchestration / audit
+    # # --------------------------------------------------
 
-    notice_orchestrator(f"""
-      A new notice has been created.
+    # notice_orchestrator(f"""
+    #   A new notice has been created.
+
+    #   Notice ID: {notice.id}
+    #   Title: {notice.title}
+    #   Category: {notice.category}
+    #   Eligibility: {notice.eligibility}
+
+    #   Process this notice and make sure it is routed
+    #   to the appropriate students.
+
+    #   Use the available tools as appropriate.
+    # """)
+
+    agent_result = notice_orchestrator(f"""
+      A new notice has been created and is ready for processing.
 
       Notice ID: {notice.id}
       Title: {notice.title}
       Category: {notice.category}
       Eligibility: {notice.eligibility}
 
-      Process this notice and make sure it is routed
-      to the appropriate students.
+      Process this notice according to your workflow.
 
-      Use the available tools as appropriate.
+      You should:
+      1. Understand the notice.
+      2. Inspect the student population if necessary.
+      3. Identify potential students using the available tools.
+      4. Call route_processed_notice with the notice ID.
+      5. Do not directly modify the database.
+      6. The deterministic routing engine is the final authority
+        for eligibility and semantic relevance.
     """)
 
-    return notice, notifications, routing_report
+    routing_report = str(agent_result)
+
+    return notice, [], routing_report
