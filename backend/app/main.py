@@ -18,9 +18,10 @@ from PIL import Image
 
 from pypdf import PdfReader
 
-from app.database import get_db, SessionLocal
+from app.database import get_db, SessionLocal, Base, engine
 from app.models.student import Student
 from app.models.notice import Notice
+from app.models.notification import Notification
 
 from app.services.embedding_service import (
     create_embedding,
@@ -31,6 +32,8 @@ from app.services.notice_workflow import process_notice_workflow
 import os
 import uuid
 from fastapi.staticfiles import StaticFiles
+
+Base.metadata.create_all(bind=engine)
 
 TESSERACT_PATH = os.getenv("TESSERACT_PATH")
 POPPLER_PATH = os.getenv("POPPLER_PATH")

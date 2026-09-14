@@ -14,5 +14,3 @@ numpy
 pytesseract
 Pillow
 pdf2image
-tesseract-ocr
-poppler-utils
