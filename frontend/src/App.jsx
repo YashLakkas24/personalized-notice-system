@@ -251,7 +251,7 @@ export default function App() {
           </a>
 
           {/* STUDENT */}
-          <div className="portal-card student-card">
+          <a href="/student/student_1" className="portal-card student-card">
             <div className="portal-card-icon">🎓</div>
 
             <div>
@@ -259,16 +259,7 @@ export default function App() {
 
               <p>View notices personalized for you.</p>
             </div>
-
-            <button
-              onClick={() => {
-                window.location.href = "/student/student_1";
-              }}
-              className="portal-button"
-            >
-              {/* Enter → */}
-            </button>
-          </div>
+          </a>
         </div>
 
         <div className="portal-footer">
