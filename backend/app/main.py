@@ -332,9 +332,7 @@ async def upload_image_notice(
         # ------------------------------------------
 
         background_tasks.add_task(
-            process_notice_in_background,
-            extracted_text,
-            image_url
+            process_notice_in_background, extracted_text, image_url
         )
 
         return {"message": "Image accepted for background processing."}
@@ -504,6 +502,22 @@ async def upload_notice_batch(
             filename = file.filename.lower()
             file_bytes = await file.read()
 
+            # ------------------------------------------
+            # Save original file
+            # ------------------------------------------
+
+            upload_dir = "uploads/notices"
+            os.makedirs(upload_dir, exist_ok=True)
+
+            extension = file.filename.split(".")[-1].lower()
+            saved_filename = f"{uuid.uuid4()}.{extension}"
+            saved_path = os.path.join(upload_dir, saved_filename)
+
+            with open(saved_path, "wb") as f:
+                f.write(file_bytes)
+
+            file_url = f"/uploads/notices/{saved_filename}"
+
             # PDF
             if filename.endswith(".pdf"):
                 reader = PdfReader(BytesIO(file_bytes))
@@ -566,8 +580,7 @@ async def upload_notice_batch(
                 continue
 
             notice, notifications, routing_report = process_notice_workflow(
-                db=db,
-                raw_text=extracted_text,
+                db=db, raw_text=extracted_text, pdf_url=file_url
             )
 
             results.append(
