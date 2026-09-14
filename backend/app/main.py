@@ -118,16 +118,17 @@ def student_login(
 ):
     student = db.query(Student).filter(Student.id == login_data.student_id).first()
 
-    if not student or student.password != login_data.password:
-        raise HTTPException(status_code=401, detail="Invalid student ID or password.")
+    if not student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found.",
+        )
 
     return {
-        "message": "Login successful.",
+        "message": "Login successful",
         "student": {
             "id": student.id,
             "name": student.name,
-            "year": student.year,
-            "branch": student.branch,
         },
     }
 
