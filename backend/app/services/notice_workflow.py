@@ -98,49 +98,29 @@ def process_notice_workflow(
     db.commit()
     db.refresh(notice)
 
-    # # --------------------------------------------------
-    # # 5. Route notice
-    # # --------------------------------------------------
-    # notifications, routing_report = route_notice_to_students(db, notice)
+    # --------------------------------------------------
+    # 5. Deterministic routing
+    # --------------------------------------------------
 
-    # # --------------------------------------------------
-    # # 6. Agent orchestration / audit
-    # # --------------------------------------------------
+    notifications, routing_report = route_notice_to_students(db, notice)
 
-    # notice_orchestrator(f"""
-    #   A new notice has been created.
-
-    #   Notice ID: {notice.id}
-    #   Title: {notice.title}
-    #   Category: {notice.category}
-    #   Eligibility: {notice.eligibility}
-
-    #   Process this notice and make sure it is routed
-    #   to the appropriate students.
-
-    #   Use the available tools as appropriate.
-    # """)
-
+    # --------------------------------------------------
+    # 6. Optional agent audit
+    # --------------------------------------------------
+    
     agent_result = notice_orchestrator(f"""
-      A new notice has been created and is ready for processing.
+    A new notice has been processed.
 
-      Notice ID: {notice.id}
-      Title: {notice.title}
-      Category: {notice.category}
-      Eligibility: {notice.eligibility}
+    Notice ID: {notice.id}
+    Title: {notice.title}
+    Category: {notice.category}
+    Eligibility: {notice.eligibility}
 
-      Process this notice according to your workflow.
+    The deterministic routing engine has already evaluated
+    all students and created the required notifications.
 
-      You should:
-      1. Understand the notice.
-      2. Inspect the student population if necessary.
-      3. Identify potential students using the available tools.
-      4. Call route_processed_notice with the notice ID.
-      5. Do not directly modify the database.
-      6. The deterministic routing engine is the final authority
-        for eligibility and semantic relevance.
+    Provide a concise audit summary of the processing.
+    Do not modify database records.
     """)
 
-    routing_report = str(agent_result)
-
-    return notice, [], routing_report
+    return notice, notifications, routing_report

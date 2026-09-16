@@ -59,8 +59,28 @@ def create_preference_embedding(preferences: str) -> list[list[float]]:
                         Rules:
                             - Preserve the student's actual intent.
                             - Detect multiple independent interests.
-                            - Expand each interest aggressively enough to avoid missing relevant
-                            opportunities.
+                            - Expand each interest moderately.
+
+                            - Only include concepts that are direct semantic equivalents
+                              or very close practical forms of the student's stated interest.
+
+                            - Do NOT broaden a general interest into unrelated subfields,
+                              career areas, technologies, competitions, or activities unless
+                              the student explicitly mentioned them.
+
+                              Examples:
+
+                                    "technical events and workshops"
+
+                                    → technical events, technical workshops, engineering workshops,
+                                    technology workshops, technical seminars
+
+                                    NOT:
+                                    entrepreneurship, startups, innovation challenges, conferences
+                                    
+                                    "sports"
+                                    → sports, sports events, sports competitions, sports tournaments,
+                                    athletic activities
                             - Keep related concepts belonging to the same interest on the same line.
                             - Return exactly ONE line for each distinct interest.
                             - Each line must contain comma-separated related concepts.
@@ -84,6 +104,12 @@ def create_preference_embedding(preferences: str) -> list[list[float]]:
         if not normalized:
             normalized = preferences
 
+        print("\n========== PREFERENCE DEBUG ==========")
+        print("RAW:", preferences)
+        print("NORMALIZED:")
+        print(normalized)
+        print("=====================================\n")
+
     except Exception as e:
         print(f"Preference normalization failed: {e}")
         normalized = preferences
@@ -97,9 +123,9 @@ def create_preference_embedding(preferences: str) -> list[list[float]]:
     if not groups:
         groups = [preferences]
 
-        print("=== PREFERENCE GROUPS ===")
-        for i, group in enumerate(groups[:8]):
-            print(f"{i + 1}: {group}")
+    print("=== PREFERENCE GROUPS ===")
+    for i, group in enumerate(groups[:8]):
+        print(f"{i + 1}: {group}")
 
     embeddings = []
 

@@ -102,9 +102,9 @@ def evaluate_student_for_notice(
         score = cosine_similarity(student_embedding, notice_embedding)
 
     print(
-        f"[MATCH] Student={student.get('id')} "
-        f"Notice={notice.get('title')} "
-        f"Score={score:.4f}"
+        f"[MATCH] Student={student.get('id')}\n"
+        f"Notice={notice.get('title')}\n"
+        f"Score={score:.4f}\n\n"
     )
 
     score = max(0.0, min(1.0, score))
