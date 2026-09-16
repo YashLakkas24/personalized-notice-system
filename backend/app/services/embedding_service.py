@@ -18,7 +18,7 @@ def create_embedding(text: str) -> list[float]:
 PREFERENCE_NORMALIZATION_MODEL = "gpt-4o-mini"
 
 
-def create_preference_embedding(preferences: str) -> list[float]:
+def create_preference_embedding(preferences: str) -> list[list[float]]:
     preferences = preferences.strip()
 
     if not preferences:
@@ -28,44 +28,49 @@ def create_preference_embedding(preferences: str) -> list[float]:
         response = client.chat.completions.create(
             model=PREFERENCE_NORMALIZATION_MODEL,
             temperature=0,
-            max_tokens=250,
+            max_tokens=300,
             messages=[
                 {
                     "role": "system",
                     "content": """
                         You are a student preference expansion engine.
 
-                        The student may describe their interests vaguely or in very few words.
+                        The student may mention multiple independent interests in one sentence.
 
-                        Expand the student's statement into a rich but accurate list of
-                        topics, activities, opportunities, events and related terms that
-                        should be considered relevant.
+                        Your job is to identify each distinct interest and expand it into
+                        related topics, activities, events and opportunities.
 
-                        Examples:
+                        Return ONE LINE PER DISTINCT INTEREST.
 
-                        "football"
-                        → football, soccer, football competitions, football tournaments,
-                        football matches, football team, football trials, football training,
-                        inter-college football, sports competitions
+                        Example:
 
-                        "AI"
-                        → artificial intelligence, machine learning, deep learning,
-                        generative AI, LLM, NLP, computer vision, AI hackathons,
-                        AI workshops, AI projects, AI competitions
+                        Student:
+                        "I am interested in football competitions and electronics events."
 
-                        "coding"
-                        → programming, software development, coding competitions,
-                        hackathons, competitive programming, programming workshops,
-                        developer events, software engineering
+                        Output:
+
+                        football competitions, football tournaments, football matches,
+                        football championships, football events, inter-college football
+
+                        electronics, electronics competitions, electronics events,
+                        electronics workshops, electronics projects, embedded systems,
+                        circuits
 
                         Rules:
-                        - Preserve the student's actual intent.
-                        - Expand broad interests aggressively enough to avoid missing
-                        relevant opportunities.
-                        - Do NOT add unrelated career interests.
-                        - Do NOT invent specific organizations or events.
-                        - Return ONLY a comma-separated list of concepts and related terms.
-                        """,
+                            - Preserve the student's actual intent.
+                            - Detect multiple independent interests.
+                            - Expand each interest aggressively enough to avoid missing relevant
+                            opportunities.
+                            - Keep related concepts belonging to the same interest on the same line.
+                            - Return exactly ONE line for each distinct interest.
+                            - Each line must contain comma-separated related concepts.
+                            - NEVER wrap one interest across multiple lines.
+                            - Do NOT combine unrelated interests into one line.
+                            - Do NOT add unrelated career interests.
+                            - Do NOT invent organizations or specific events.
+                            - Return ONLY the expanded interest groups.
+                            - Maximum 8 interest groups.
+                            """,
                 },
                 {
                     "role": "user",
@@ -83,15 +88,28 @@ def create_preference_embedding(preferences: str) -> list[float]:
         print(f"Preference normalization failed: {e}")
         normalized = preferences
 
-    embedding_text = f"""
-        Original student requirements:
-        {preferences}
+    # ---------------------------------------------
+    # Create one embedding per independent interest
+    # ---------------------------------------------
 
-        Expanded matching concepts:
-        {normalized}
-    """
+    groups = [line.strip() for line in normalized.splitlines() if line.strip()]
 
-    return create_embedding(embedding_text)
+    if not groups:
+        groups = [preferences]
+
+        print("=== PREFERENCE GROUPS ===")
+        for i, group in enumerate(groups[:8]):
+            print(f"{i + 1}: {group}")
+
+    embeddings = []
+
+    for group in groups[:8]:
+
+        # embedding_text = group
+
+        embeddings.append(create_embedding(group))
+
+    return embeddings
 
 
 def cosine_similarity(vector_a: list[float], vector_b: list[float]) -> float:

@@ -7,26 +7,25 @@ def check_eligibility(
 
     eligibility = notice.get("eligibility", {})
 
-    eligible_years = eligibility.get("years", [])
-    eligible_branches = eligibility.get("branches", ["ALL"])
+    eligible_years = eligibility.get("years") or []
+    eligible_branches = eligibility.get("branches") or ["ALL"]
 
     student_year = student.get("year")
-    student_branch = student.get("branch", "").upper()
-
-    # -------------------------
-    # Year eligibility
-    # -------------------------
-
-    year_match = not eligible_years or student_year in eligible_years
-
+    student_branch = (student.get("branch") or "").strip().upper()
     # -------------------------
     # Branch eligibility
     # -------------------------
 
-    normalized_branches = [str(branch).upper() for branch in eligible_branches]
+    normalized_branches = [str(branch).strip().upper() for branch in eligible_branches]
 
-    branch_match = "ALL" in normalized_branches or student_branch in normalized_branches
+    # Empty / ALL = no restriction
+    year_match = not eligible_years or student_year in eligible_years
 
+    branch_match = (
+        not normalized_branches
+        or "ALL" in normalized_branches
+        or student_branch in normalized_branches
+    )
     eligible = year_match and branch_match
 
     reasons = []

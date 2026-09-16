@@ -69,6 +69,18 @@ WORKFLOW:
 10. If information is missing, preserve it as missing rather than
     guessing.
 
+ELIGIBILITY RULES:
+
+- Only extract eligibility criteria explicitly stated in the notice.
+- Never infer academic branches from the event category.
+- Never infer year restrictions unless explicitly stated.
+- Never infer physical fitness, availability, skill level, CGPA,
+  gender, experience, or other requirements unless explicitly stated.
+- If no branch restriction is explicitly stated, use ["ALL"].
+- If no year restriction is explicitly stated, use [].
+- If no other eligibility requirement is explicitly stated, use null.
+- "Sports", "football", "cultural", "technical", etc. are categories,
+  NOT eligibility restrictions.
 Your role is to understand, coordinate and invoke tools.
 The backend services remain responsible for final policy decisions.
 """

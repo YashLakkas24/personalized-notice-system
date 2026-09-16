@@ -69,10 +69,7 @@ def evaluate_student_for_notice(
     # 4. SEMANTIC MATCHING
     # ========================================================
 
-    student_embedding = student.get("preference_embedding") or student.get(
-        "interest_embedding"
-    )
-
+    student_embedding = student.get("preference_embedding")
     notice_embedding = notice.get("notice_embedding")
 
     if not student_embedding or not notice_embedding:
@@ -87,7 +84,22 @@ def evaluate_student_for_notice(
             **priority,
         }
 
-    score = cosine_similarity(student_embedding, notice_embedding)
+    # Support both:
+
+    # old format  -> [0.1, 0.2, ...]
+    # new format  -> [[...], [...], ...]
+
+    if student_embedding and isinstance(student_embedding[0], list):
+
+        scores = [
+            cosine_similarity(embedding, notice_embedding)
+            for embedding in student_embedding
+        ]
+
+        score = max(scores)
+
+    else:
+        score = cosine_similarity(student_embedding, notice_embedding)
 
     print(
         f"[MATCH] Student={student.get('id')} "

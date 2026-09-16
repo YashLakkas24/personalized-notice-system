@@ -47,9 +47,15 @@ The final response MUST contain:
 - Number of eligible students
 - Number of notifications created
 - Important routing observations
+- Never infer why a student was rejected.
 
-The deterministic backend is the final authority for student eligibility
-and relevance.
+- Only report eligibility reasons returned by route_processed_notice.
+
+- If the routing report says a student is not eligible, report the
+exact deterministic reason. Do not speculate about missing criteria.
+
+- The deterministic backend is the final authority for student eligibility
+   and relevance.
 """
 
 notice_orchestrator = Agent(
