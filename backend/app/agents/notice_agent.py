@@ -6,11 +6,6 @@ from strands.models import OpenAIModel
 
 from app.agents.prompts import NOTICE_SYSTEM_PROMPT
 from app.schemas.notice import NoticeMetadata
-from app.agents.tools import (
-    get_student_population_summary,
-    find_relevant_students,
-    route_processed_notice,
-)
 
 load_dotenv()
 
@@ -35,11 +30,6 @@ model = OpenAIModel(
 notice_agent = Agent(
     model=model,
     system_prompt=NOTICE_SYSTEM_PROMPT,
-    tools=[
-        get_student_population_summary,
-        find_relevant_students,
-        route_processed_notice,
-    ],
 )
 
 

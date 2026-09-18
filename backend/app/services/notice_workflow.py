@@ -4,7 +4,6 @@ from app.agents.notice_agent import process_new_notice
 from app.services.embedding_service import create_embedding
 from app.services.notification_service import route_notice_to_students
 from app.models.notice import Notice
-from app.agents.notice_orchestrator import notice_orchestrator
 
 import uuid
 
@@ -103,24 +102,5 @@ def process_notice_workflow(
     # --------------------------------------------------
 
     notifications, routing_report = route_notice_to_students(db, notice)
-
-    # --------------------------------------------------
-    # 6. Optional agent audit
-    # --------------------------------------------------
-    
-    agent_result = notice_orchestrator(f"""
-    A new notice has been processed.
-
-    Notice ID: {notice.id}
-    Title: {notice.title}
-    Category: {notice.category}
-    Eligibility: {notice.eligibility}
-
-    The deterministic routing engine has already evaluated
-    all students and created the required notifications.
-
-    Provide a concise audit summary of the processing.
-    Do not modify database records.
-    """)
 
     return notice, notifications, routing_report
