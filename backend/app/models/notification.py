@@ -8,6 +8,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 
 from app.database import Base
@@ -16,6 +17,10 @@ from app.database import Base
 class Notification(Base):
 
     __tablename__ = "notifications"
+
+    _table_args__ = UniqueConstraint(
+        "student_id", "notice_id", name="uq_notification_student_notice"
+    )
 
     id = Column(String, primary_key=True)
 
