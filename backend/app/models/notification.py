@@ -18,7 +18,7 @@ class Notification(Base):
 
     __tablename__ = "notifications"
 
-    _table_args__ = UniqueConstraint(
+    __table_args__ = UniqueConstraint(
         "student_id", "notice_id", name="uq_notification_student_notice"
     )
 
