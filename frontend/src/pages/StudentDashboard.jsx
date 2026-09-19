@@ -128,6 +128,15 @@ export default function StudentDashboard({ studentId }) {
     }
   }
 
+  function formatPostedDate(date) {
+    if (!date) return "Date unavailable";
+
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
   if (loading) {
     return (
       <div>
@@ -324,23 +333,28 @@ export default function StudentDashboard({ studentId }) {
                 onClick={() => handleNotificationOpen(notification)}
               >
                 <div className="notification-top">
-                  <span
-                    className={`priority-badge ${getPriorityClass(
-                      notification.priority,
-                    )}`}
-                  >
-                    {notification.priority === "CRITICAL"
-                      ? "🔴 Critical"
-                      : notification.priority === "HIGH"
-                        ? "🟠 High Priority"
-                        : "🔵 Normal"}
-                  </span>
+                  <div className="notification-top-left">
+                    <span
+                      className={`priority-badge ${getPriorityClass(
+                        notification.priority,
+                      )}`}
+                    >
+                      {notification.priority === "CRITICAL"
+                        ? "🔴 Critical"
+                        : notification.priority === "HIGH"
+                          ? "🟠 High Priority"
+                          : "🔵 Normal"}
+                    </span>
+
+                    <span className="posted-date">
+                      Posted {formatPostedDate(notification.created_at)}
+                    </span>
+                  </div>
 
                   <span className="category-badge">
                     {notification.category}
                   </span>
                 </div>
-
                 <h2>{notification.title}</h2>
 
                 <p>{notification.summary}</p>
@@ -417,9 +431,19 @@ export default function StudentDashboard({ studentId }) {
             {allNotices.map((notice) => (
               <div key={notice.id} className="notification-card">
                 <div className="notification-top">
-                  <span>{notice.category}</span>
+                  <div className="notification-top-left">
+                    <span className="category-badge">{notice.category}</span>
 
-                  {notice.deadline && <span>Deadline: {notice.deadline}</span>}
+                    <span className="posted-date">
+                      Posted {formatPostedDate(notice.created_at)}
+                    </span>
+                  </div>
+
+                  {notice.deadline && (
+                    <span className="posted-date">
+                      Deadline: {notice.deadline}
+                    </span>
+                  )}
                 </div>
 
                 <h2>{notice.title}</h2>

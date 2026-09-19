@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   uploadNoticeBatch,
   uploadTextNotice,
   createStudent,
+  getAllNotices,
 } from "../api/notifications";
 import "./AdminDashboard.css";
 
@@ -17,6 +18,8 @@ export default function AdminDashboard() {
   const [noticeText, setNoticeText] = useState("");
   const [textLoading, setTextLoading] = useState(false);
   const [showStudentForm, setShowStudentForm] = useState(false);
+  const [noticeHistory, setNoticeHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   const [student, setStudent] = useState({
     id: "",
@@ -107,6 +110,54 @@ export default function AdminDashboard() {
     }
   }
 
+  function formatPostedDate(date) {
+    if (!date) return "Date unavailable";
+
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  async function loadNoticeHistory() {
+    try {
+      setHistoryLoading(true);
+
+      const data = await getAllNotices();
+
+      setNoticeHistory(data.notices || []);
+    } catch (err) {
+      console.error("Failed to load notice history:", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+  useEffect(() => {
+    let cancelled = false;
+
+    setHistoryLoading(true);
+
+    getAllNotices()
+      .then((data) => {
+        if (!cancelled) {
+          setNoticeHistory(data.notices || []);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load notice history:", err);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setHistoryLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function handleTextSubmit() {
     if (!noticeText.trim()) {
       setError("Please enter a notice.");
@@ -132,8 +183,11 @@ export default function AdminDashboard() {
           },
         ],
       });
-
       setNoticeText("");
+
+      setTimeout(() => {
+        loadNoticeHistory();
+      }, 1500);
     } catch (err) {
       setError(err.message || "Text notice processing failed.");
     } finally {
@@ -155,6 +209,8 @@ export default function AdminDashboard() {
 
       setResult(data);
       setFiles([]);
+
+      await loadNoticeHistory();
     } catch (err) {
       setError(err.message || "Notice processing failed.");
     } finally {
@@ -570,6 +626,67 @@ export default function AdminDashboard() {
             </div>
           </section>
         )}
+        {/* NOTICE HISTORY */}
+        <section className="notice-history-panel">
+          <div className="history-header">
+            <div>
+              <span className="section-kicker">NOTICE HISTORY</span>
+
+              <h2>Previously published notices</h2>
+
+              <p>
+                Every notice processed by the administration, ordered by posting
+                date.
+              </p>
+            </div>
+
+            <div className="history-count">
+              {noticeHistory.length}{" "}
+              {noticeHistory.length === 1 ? "notice" : "notices"}
+            </div>
+          </div>
+
+          {historyLoading ? (
+            <div className="history-empty">
+              <span className="spinner" />
+              Loading notice history...
+            </div>
+          ) : noticeHistory.length === 0 ? (
+            <div className="history-empty">
+              <span>📭</span>
+              <p>No notices have been published yet.</p>
+            </div>
+          ) : (
+            <div className="history-list">
+              {noticeHistory.map((notice) => (
+                <div className="history-item" key={notice.id}>
+                  <div className="history-item-main">
+                    <div className="history-file-icon">📄</div>
+
+                    <div>
+                      <h3>{notice.title}</h3>
+
+                      <div className="history-meta">
+                        <span>{notice.category}</span>
+                        <span>
+                          Posted {formatPostedDate(notice.created_at)}
+                        </span>
+
+                        {notice.is_mandatory && (
+                          <span className="history-mandatory">Mandatory</span>
+                        )}
+                      </div>
+
+                      {notice.summary && (
+                        <p className="history-summary">{notice.summary}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

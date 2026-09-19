@@ -69,6 +69,8 @@ def process_notice_workflow(
         Summary: {notice_data["summary"]}
         Required action: {notice_data["required_action"]}
         Eligibility: {notice_data["eligibility"]}
+        Original notice:
+        {raw_text}
     """
 
     notice_embedding = create_embedding(notice_embedding_text)
