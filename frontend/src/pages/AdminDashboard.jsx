@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   uploadNoticeBatch,
   uploadTextNotice,
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
     });
   }
 
-  async function loadNoticeHistory() {
+  const loadNoticeHistory = useCallback(async () => {
     try {
       setHistoryLoading(true);
 
@@ -132,31 +132,11 @@ export default function AdminDashboard() {
     } finally {
       setHistoryLoading(false);
     }
-  }
-  useEffect(() => {
-    let cancelled = false;
-
-    setHistoryLoading(true);
-
-    getAllNotices()
-      .then((data) => {
-        if (!cancelled) {
-          setNoticeHistory(data.notices || []);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to load notice history:", err);
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setHistoryLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    loadNoticeHistory();
+  }, [loadNoticeHistory]);
 
   async function handleTextSubmit() {
     if (!noticeText.trim()) {
@@ -580,7 +560,7 @@ export default function AdminDashboard() {
 
                 <div>
                   <h2>Processing complete</h2>
-                  <p>Your notices have been processed successfully.</p>
+                  <p>Your notices have been processed successfully.</p>{" "}
                 </div>
               </div>
 
@@ -612,7 +592,11 @@ export default function AdminDashboard() {
             <div className="result-list">
               {result.results.map((item) => (
                 <div className="result-item" key={item.filename}>
-                  <span>{item.status === "success" ? "✓" : "×"}</span>
+                  <span>
+                    {item.status === "success" || item.status === "queued"
+                      ? "✓"
+                      : "×"}
+                  </span>
 
                   <div>
                     <strong>{item.filename}</strong>

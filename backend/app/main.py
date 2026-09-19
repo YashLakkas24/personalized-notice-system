@@ -488,8 +488,8 @@ def get_students(
 
 @app.post("/api/admin/notices/batch")
 async def upload_notice_batch(
+    background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(...),
-    db: Session = Depends(get_db),
 ):
     results = []
 
@@ -575,22 +575,18 @@ async def upload_notice_batch(
                 )
                 continue
 
-            notice, notifications, routing_report = process_notice_workflow(
-                db=db, raw_text=extracted_text, pdf_url=file_url
+            background_tasks.add_task(
+                process_notice_in_background, extracted_text, file_url
             )
 
             results.append(
                 {
                     "filename": file.filename,
                     "status": "success",
-                    "notice_id": notice.id,
-                    "title": notice.title,
-                    "notifications_created": len(notifications),
                 }
             )
 
         except Exception as e:
-            db.rollback()
 
             results.append(
                 {
@@ -600,11 +596,15 @@ async def upload_notice_batch(
                 }
             )
 
+    successful_count = sum(1 for r in results if r["status"] == "success")
+
+    failed_count = sum(1 for r in results if r["status"] == "failed")
+
     return {
-        "message": "Batch processing completed",
+        "message": "Batch notices accepted for background processing.",
         "total_files": len(files),
-        "successful": sum(1 for r in results if r["status"] == "success"),
-        "failed": sum(1 for r in results if r["status"] == "failed"),
+        "successful": successful_count,
+        "failed": failed_count,
         "results": results,
     }
 
