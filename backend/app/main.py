@@ -477,13 +477,18 @@ def get_students(
 ):
     students = db.query(Student).order_by(Student.name).all()
 
-    if not students:
-        raise HTTPException(
-            status_code=404,
-            detail="Student profile not found.",
-        )
-
-    return students
+    return {
+        "total": len(students),
+        "students": [
+            {
+                "id": student.id,
+                "name": student.name,
+                "year": student.year,
+                "branch": student.branch,
+            }
+            for student in students
+        ],
+    }
 
 
 @app.post("/api/admin/notices/batch")

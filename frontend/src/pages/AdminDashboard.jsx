@@ -5,6 +5,8 @@ import {
   createStudent,
   getAllNotices,
 } from "../api/notifications";
+
+import { getAllStudents } from "../api/student";
 import "./AdminDashboard.css";
 
 export default function AdminDashboard() {
@@ -20,6 +22,8 @@ export default function AdminDashboard() {
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [noticeHistory, setNoticeHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
 
   const [student, setStudent] = useState({
     id: "",
@@ -95,6 +99,8 @@ export default function AdminDashboard() {
         branch: student.branch.trim(),
       });
 
+      await loadStudents();
+
       setStudentMessage(`${student.name} was added successfully.`);
 
       setStudent({
@@ -120,6 +126,14 @@ export default function AdminDashboard() {
     });
   }
 
+  function formatYear(year) {
+    if (year === 1) return "1st Year";
+    if (year === 2) return "2nd Year";
+    if (year === 3) return "3rd Year";
+    if (year === 4) return "4th Year";
+
+    return `${year}th Year`;
+  }
   const loadNoticeHistory = useCallback(async () => {
     try {
       setHistoryLoading(true);
@@ -134,9 +148,24 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const loadStudents = useCallback(async () => {
+    try {
+      setStudentsLoading(true);
+
+      const data = await getAllStudents();
+
+      setStudents(data.students || []);
+    } catch (err) {
+      console.error("Failed to load students:", err);
+    } finally {
+      setStudentsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadNoticeHistory();
-  }, [loadNoticeHistory]);
+    loadStudents();
+  }, [loadNoticeHistory, loadStudents]);
 
   async function handleTextSubmit() {
     if (!noticeText.trim()) {
@@ -388,6 +417,65 @@ export default function AdminDashboard() {
             </form>
           </section>
         )}
+        {/* CURRENT STUDENTS */}
+
+        <section className="current-students-panel">
+          <div className="current-students-header">
+            <div>
+              <span className="section-kicker">CURRENT STUDENTS</span>
+
+              <h2>Registered student profiles</h2>
+
+              <p>Academic profiles used for eligibility and notice routing.</p>
+            </div>
+
+            <div className="current-students-count">
+              {students.length} {students.length === 1 ? "student" : "students"}
+            </div>
+          </div>
+
+          <div className="student-privacy-note">
+            🔒 Student preferences are private and are not visible to
+            administrators.
+          </div>
+
+          {studentsLoading ? (
+            <div className="students-empty">
+              <span className="spinner" />
+              Loading students...
+            </div>
+          ) : students.length === 0 ? (
+            <div className="students-empty">
+              <span>👥</span>
+              <p>No students have been registered yet.</p>
+            </div>
+          ) : (
+            <div className="students-list">
+              {students.map((student) => (
+                <div className="student-list-item" key={student.id}>
+                  <div className="student-list-avatar">👤</div>
+
+                  <div className="student-list-main">
+                    <strong>{student.name}</strong>
+
+                    <span>{student.id}</span>
+                  </div>
+
+                  <div className="student-list-detail">
+                    <span>YEAR</span>
+                    <strong>{formatYear(student.year)}</strong>
+                  </div>
+
+                  <div className="student-list-detail">
+                    <span>BRANCH</span>
+                    <strong>{student.branch}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* UPLOAD */}
         <section className="upload-panel">
           <div className="text-notice-panel">

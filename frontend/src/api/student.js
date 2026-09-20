@@ -10,6 +10,16 @@ export async function getStudentProfile(studentId) {
   return response.json();
 }
 
+export async function getAllStudents() {
+  const response = await fetch(`${API_BASE}/api/students`);
+
+  if (!response.ok) {
+    throw new Error("Failed to load students");
+  }
+
+  return response.json();
+}
+
 export async function updateStudentPreferences(studentId, preferences) {
   const response = await fetch(`${API_BASE}/api/student/${studentId}/profile`, {
     method: "PUT",

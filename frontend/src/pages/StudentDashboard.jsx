@@ -16,6 +16,7 @@ export default function StudentDashboard({ studentId }) {
   const [allNotices, setAllNotices] = useState([]);
 
   const [preferences, setPreferences] = useState("");
+  const [profile, setProfile] = useState(null);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [preferencesMessage, setPreferencesMessage] = useState("");
 
@@ -29,9 +30,10 @@ export default function StudentDashboard({ studentId }) {
 
   async function loadProfile() {
     try {
-      const profile = await getStudentProfile(studentId);
+      const profileData = await getStudentProfile(studentId);
 
-      setPreferences(profile.preferences || "");
+      setProfile(profileData);
+      setPreferences(profileData.preferences || "");
     } catch (err) {
       console.error(err);
     }
@@ -128,6 +130,15 @@ export default function StudentDashboard({ studentId }) {
     }
   }
 
+  function formatYear(year) {
+    if (year === 1) return "1st Year";
+    if (year === 2) return "2nd Year";
+    if (year === 3) return "3rd Year";
+    if (year === 4) return "4th Year";
+
+    return `${year}th Year`;
+  }
+
   function formatPostedDate(date) {
     if (!date) return "Date unavailable";
 
@@ -158,7 +169,11 @@ export default function StudentDashboard({ studentId }) {
   }
 
   const displayedCount =
-    activeTab === "relevant" ? relevantNotices.length : allNotices.length;
+    activeTab === "relevant"
+      ? relevantNotices.length
+      : activeTab === "all"
+        ? allNotices.length
+        : null;
 
   return (
     <div className="student-dashboard">
@@ -192,6 +207,13 @@ export default function StudentDashboard({ studentId }) {
         </button>
 
         <button
+          className={activeTab === "profile" ? "active" : ""}
+          onClick={() => setActiveTab("profile")}
+        >
+          👤 My Profile
+        </button>
+
+        <button
           className={activeTab === "preferences" ? "active" : ""}
           onClick={() => setActiveTab("preferences")}
         >
@@ -219,10 +241,12 @@ export default function StudentDashboard({ studentId }) {
           </p>
         </div>
 
-        <div>
-          <strong>{displayedCount}</strong>{" "}
-          {activeTab === "relevant" ? "relevant notices" : "total notices"}
-        </div>
+        {displayedCount !== null && (
+          <div>
+            <strong>{displayedCount}</strong>{" "}
+            {activeTab === "relevant" ? "relevant notices" : "total notices"}
+          </div>
+        )}
       </div>
       <div className="notice-stats">
         <div className="stat-card">
@@ -257,6 +281,46 @@ export default function StudentDashboard({ studentId }) {
           </div>
         </div>
       </div>
+
+      {activeTab === "profile" && profile && (
+        <div className="profile-card">
+          <div className="profile-header">
+            <div className="profile-icon">👤</div>
+
+            <div>
+              <h2>My Profile</h2>
+              <p>Your academic information used by CampusNotice.AI.</p>
+            </div>
+          </div>
+
+          <div className="profile-grid">
+            <div className="profile-field">
+              <span>STUDENT ID</span>
+              <strong>{profile.id}</strong>
+            </div>
+
+            <div className="profile-field">
+              <span>FULL NAME</span>
+              <strong>{profile.name}</strong>
+            </div>
+
+            <div className="profile-field">
+              <span>ACADEMIC YEAR</span>
+              <strong>{formatYear(profile.year)}</strong>
+            </div>
+
+            <div className="profile-field">
+              <span>BRANCH</span>
+              <strong>{profile.branch}</strong>
+            </div>
+          </div>
+
+          <div className="profile-info">
+            🎓 These academic details are used when determining eligibility for
+            notices.
+          </div>
+        </div>
+      )}
 
       {activeTab === "preferences" && (
         <div className="preferences-card">
