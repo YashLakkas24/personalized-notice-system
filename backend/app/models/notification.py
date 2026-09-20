@@ -18,8 +18,12 @@ class Notification(Base):
 
     __tablename__ = "notifications"
 
-    __table_args__ = UniqueConstraint(
-        "student_id", "notice_id", name="uq_notification_student_notice"
+    __table_args__ = (
+        UniqueConstraint(
+            "student_id",
+            "notice_id",
+            name="uq_notification_student_notice",
+        ),
     )
 
     id = Column(String, primary_key=True)

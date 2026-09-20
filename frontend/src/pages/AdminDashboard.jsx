@@ -159,7 +159,7 @@ export default function AdminDashboard() {
           {
             filename: "Text Notice",
             status: "success",
-            title: data.notice?.title || "Notice processed successfully",
+            title: data.notice?.title || "Notice accepted for processing",
           },
         ],
       });
@@ -559,8 +559,11 @@ export default function AdminDashboard() {
                 <span className="success-mark">✓</span>
 
                 <div>
-                  <h2>Processing complete</h2>
-                  <p>Your notices have been processed successfully.</p>{" "}
+                  <h2>Notices accepted</h2>
+                  <p>
+                    Your notices have been accepted and are being analyzed.
+                    Personalized feeds will update shortly.
+                  </p>
                 </div>
               </div>
 
@@ -580,7 +583,7 @@ export default function AdminDashboard() {
 
               <div className="result-stat success">
                 <strong>{result.successful}</strong>
-                <span>Successful</span>
+                <span>Accepted</span>
               </div>
 
               <div className="result-stat failed">

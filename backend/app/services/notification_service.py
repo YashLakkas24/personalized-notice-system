@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.models.student import Student
 from app.models.notice import Notice
@@ -100,21 +101,27 @@ def route_notice_to_students(
         if existing:
             continue
 
-        notification = Notification(
-            id=str(uuid.uuid4()),
-            student_id=student["id"],
-            notice_id=notice.id,
-            relevance_score=evaluation["relevance_score"],
-            priority=evaluation["priority"],
-            urgency=evaluation["urgency"],
-            days_left=evaluation["days_left"],
-            reason=evaluation["reason"],
-            status="UNREAD",
-        )
+        try:
+            with db.begin_nested():
+                notification = Notification(
+                    id=str(uuid.uuid4()),
+                    student_id=student["id"],
+                    notice_id=notice.id,
+                    relevance_score=evaluation["relevance_score"],
+                    priority=evaluation["priority"],
+                    urgency=evaluation["urgency"],
+                    days_left=evaluation["days_left"],
+                    reason=evaluation["reason"],
+                    status="UNREAD",
+                )
 
-        db.add(notification)
+                db.add(notification)
+                db.flush()
 
-        created.append(notification)
+            created.append(notification)
+
+        except IntegrityError:
+            continue
 
     db.commit()
 
@@ -199,21 +206,31 @@ def refresh_student_notifications(
             existing.reason = evaluation["reason"]
 
         elif should_notify and not existing:
-            db.add(
-                Notification(
-                    id=str(uuid.uuid4()),
-                    student_id=student.id,
-                    notice_id=notice.id,
-                    relevance_score=evaluation["relevance_score"],
-                    priority=evaluation["priority"],
-                    urgency=evaluation["urgency"],
-                    days_left=evaluation["days_left"],
-                    reason=evaluation["reason"],
-                    status="UNREAD",
-                )
-            )
 
-        # No longer relevant → remove from personalized feed
+            try:
+                with db.begin_nested():
+                    db.add(
+                        Notification(
+                            id=str(uuid.uuid4()),
+                            student_id=student.id,
+                            notice_id=notice.id,
+                            relevance_score=evaluation["relevance_score"],
+                            priority=evaluation["priority"],
+                            urgency=evaluation["urgency"],
+                            days_left=evaluation["days_left"],
+                            reason=evaluation["reason"],
+                            status="UNREAD",
+                        )
+                    )
+
+                    db.flush()
+
+            except IntegrityError:
+                # Another concurrent operation already created
+                # this student's notification for the same notice.
+                continue
+
+            # No longer relevant → remove from personalized feed
         elif not should_notify and existing:
 
             db.delete(existing)
