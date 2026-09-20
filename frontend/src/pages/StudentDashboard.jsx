@@ -229,7 +229,9 @@ export default function StudentDashboard({ studentId }) {
               ? "Relevant Notices"
               : activeTab === "all"
                 ? "All Notices"
-                : "My Preferences"}
+                : activeTab === "profile"
+                  ? "My Profile"
+                  : "My Preferences"}
           </h1>
 
           <p>
@@ -237,7 +239,9 @@ export default function StudentDashboard({ studentId }) {
               ? "Important information selected specifically for you."
               : activeTab === "all"
                 ? "All notices published by the administration."
-                : "Tell us what you're looking for so we can personalize your notices."}
+                : activeTab === "profile"
+                  ? "Your academic information used by CampusNotice.AI."
+                  : "Tell us what you're looking for so we can personalize your notices."}
           </p>
         </div>
 
@@ -248,39 +252,41 @@ export default function StudentDashboard({ studentId }) {
           </div>
         )}
       </div>
-      <div className="notice-stats">
-        <div className="stat-card">
-          <span className="stat-icon">🎯</span>
-          <div>
-            <strong>{relevantNotices.length}</strong>
-            <span>Relevant</span>
+      {(activeTab === "relevant" || activeTab === "all") && (
+        <div className="notice-stats">
+          <div className="stat-card">
+            <span className="stat-icon">🎯</span>
+            <div>
+              <strong>{relevantNotices.length}</strong>
+              <span>Relevant</span>
+            </div>
           </div>
-        </div>
 
-        <div className="stat-card">
-          <span className="stat-icon">🔴</span>
-          <div>
-            <strong>{urgentCount}</strong>
-            <span>Urgent</span>
+          <div className="stat-card">
+            <span className="stat-icon">🔴</span>
+            <div>
+              <strong>{urgentCount}</strong>
+              <span>Urgent</span>
+            </div>
           </div>
-        </div>
 
-        <div className="stat-card">
-          <span className="stat-icon">🔔</span>
-          <div>
-            <strong>{unreadCount}</strong>
-            <span>Unread</span>
+          <div className="stat-card">
+            <span className="stat-icon">🔔</span>
+            <div>
+              <strong>{unreadCount}</strong>
+              <span>Unread</span>
+            </div>
           </div>
-        </div>
 
-        <div className="stat-card">
-          <span className="stat-icon">📋</span>
-          <div>
-            <strong>{allNotices.length}</strong>
-            <span>Total Notices</span>
+          <div className="stat-card">
+            <span className="stat-icon">📋</span>
+            <div>
+              <strong>{allNotices.length}</strong>
+              <span>Total Notices</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {activeTab === "profile" && profile && (
         <div className="profile-card">
