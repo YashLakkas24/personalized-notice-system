@@ -6,14 +6,9 @@
 
 CampusNotice.AI turns a traditional college notice board into a personalized information system. Instead of every student manually scanning dozens of announcements, the system understands each incoming notice, checks academic eligibility, matches it against each student's stated interests, and surfaces only what's actually relevant — with a visible reason why.
 
-<!--
-SCREENSHOT: Student "Relevant to You" feed, with at least one notice card
-expanded to show its "why this was recommended" reason text.
-This is the single most important image in this README — it's the
-one piece of evidence that personalization is real and not just a
-claim. Replace this comment block with:
-![Relevant to You feed](docs/screenshots/relevant-to-you.png)
--->
+![CampusNotice.AI - Relevant to You](docs/screenshots/relevant-notices.png)
+
+*The personalized feed surfaces notices relevant to the student's interests and eligibility, with an explanation for each recommendation.*
 
 <!--
 DEMO VIDEO: 3–5 minute walkthrough covering the flow in "Demo Flow" below.
@@ -79,6 +74,32 @@ The administrator publishes a notice once. Everything downstream — understandi
 
 ---
 
+## 🖥️ Application Preview
+
+### Student — Relevant to You
+
+![Relevant to You](docs/screenshots/relevant-to-you.png)
+
+### Student — All Notices
+
+![All Notices](docs/screenshots/all-notices.png)
+
+### Student — My Preferences
+
+![My Preferences](docs/screenshots/my-preferences.png)
+
+### Student — My Profile
+
+![My Profile](docs/screenshots/my-profile.png)
+
+### Admin Portal
+
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+
+### Student Login
+
+![Student Login](docs/screenshots/student-login.png)
+
 ## How the AI Actually Works
 
 CampusNotice.AI deliberately separates **understanding** from **deciding**. This is the core engineering decision behind the project.
@@ -142,6 +163,16 @@ If this student is in their third year, the first-year-only orientation is filte
 ---
 
 ## System Architecture
+
+![CampusNotice.AI System Architecture](docs/architecture.png)
+
+The system separates AI-powered understanding from deterministic
+decision-making.
+
+A notice first passes through text extraction/OCR and the Strands Agent.
+The resulting structured metadata is embedded and compared with student
+preferences. Academic eligibility, notification decisions, and priority
+are then handled by deterministic application logic.
 
 The pipeline above shows the *conceptual* flow. In terms of actual backend components, one notice moves through:
 
