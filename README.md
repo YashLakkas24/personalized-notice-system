@@ -6,7 +6,6 @@
 
 CampusNotice.AI turns a traditional college notice board into a personalized information system. Instead of every student manually scanning dozens of announcements, the system understands each incoming notice, checks academic eligibility, matches it against each student's stated interests, and surfaces only what's actually relevant — with a visible reason why.
 
-![CampusNotice.AI - Relevant to You](docs/screenshots/relevant-notices.png)
 
 *The personalized feed surfaces notices relevant to the student's interests and eligibility, with an explanation for each recommendation.*
 
@@ -74,31 +73,6 @@ The administrator publishes a notice once. Everything downstream — understandi
 
 ---
 
-## 🖥️ Application Preview
-
-### Student — Relevant to You
-
-![Relevant to You](docs/screenshots/relevant-notices.png)
-
-### Student — All Notices
-
-![All Notices](docs/screenshots/all-notices.png)
-
-### Student — My Preferences
-
-![My Preferences](docs/screenshots/my-preferences.png)
-
-### Student — My Profile
-
-![My Profile](docs/screenshots/my-profile.png)
-
-### Admin Portal
-
-![Admin Dashboard](docs/screenshots/admin-dashboard.png)
-
-### Student Login
-
-![Student Login](docs/screenshots/student-login.png)
 
 ## How the AI Actually Works
 
@@ -159,6 +133,33 @@ If this student is in their third year, the first-year-only orientation is filte
 **Student profile** — Students see their own academic info (ID, name, year, branch); their preference data stays private and separate from what the admin sees.
 
 **Admin portal** — Create student profiles, upload single or multiple notices, paste raw text, and view notice processing history. Admins do not see which individual students received which notices.
+
+## 🖥️ Application Preview
+
+### Student — Relevant to You
+
+![Relevant to You](docs/screenshots/relevant-notices.png)
+
+### Student — All Notices
+
+![All Notices](docs/screenshots/all-notices.png)
+
+### Student — My Preferences
+
+![My Preferences](docs/screenshots/my-preferences.png)
+
+### Student — My Profile
+
+![My Profile](docs/screenshots/my-profile.png)
+
+### Admin Portal
+
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+
+### Student Login
+
+![Student Login](docs/screenshots/student-login.png)
+
 
 ---
 
@@ -401,7 +402,7 @@ This walks the complete loop: notice ingestion → AI understanding → personal
 
 ---
 
-## What We Learned
+## What I Learned
 
 Building this required working across the full stack: FastAPI API design, React state and UI flow, PostgreSQL/SQLAlchemy, OCR and document processing, semantic embeddings, agent-based AI workflows with the Strands Agents SDK, deterministic business-rule design, signed-token authentication, and background processing for slow AI operations.
 
