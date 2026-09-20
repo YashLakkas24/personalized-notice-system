@@ -59,7 +59,10 @@ export default function StudentLogin() {
 
           <p>Sign in to access notices personalized for you.</p>
 
-          <label htmlFor="student-id">Student ID</label>
+          <label htmlFor="student-id" className="login-field-label">
+            <span>Student ID</span>
+            <strong>Demo: student_1-student_4</strong>
+          </label>
 
           <input
             id="student-id"
@@ -70,7 +73,10 @@ export default function StudentLogin() {
             required
           />
 
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password" className="login-field-label">
+            <span>Password</span>
+            <strong>Demo: student123</strong>
+          </label>
 
           <input
             id="password"

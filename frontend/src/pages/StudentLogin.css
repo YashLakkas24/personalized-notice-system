@@ -245,6 +245,31 @@
 .login-back:hover {
   color: #c4b5fd;
 }
+.student-login-card label.login-field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  margin: 16px 0 7px;
+}
+
+.student-login-card label.login-field-label span {
+  color: #d1d5db;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.student-login-card label.login-field-label strong {
+  margin-left: auto;
+
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
 
 /* MOBILE */
 
