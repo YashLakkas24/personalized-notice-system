@@ -430,6 +430,8 @@ AI tools were used during development as learning and development aids — for b
 
 MIT — see [`LICENSE`](LICENSE).
 
-## Team
+## Author
 
-Built by the CampusNotice.AI team.
+**Yash Lakkas**
+
+CampusNotice.AI is an individual project.
