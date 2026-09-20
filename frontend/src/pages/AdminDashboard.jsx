@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [students, setStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(true);
+  const [showStudentList, setShowStudentList] = useState(false);
 
   const [student, setStudent] = useState({
     id: "",
@@ -264,23 +265,37 @@ export default function AdminDashboard() {
             <div>
               <span className="section-kicker">STUDENT MANAGEMENT</span>
 
-              <h2>Add a student</h2>
+              <h2>Manage Students</h2>
 
-              <p>Create the academic profile used for notice eligibility.</p>
+              <p>
+                Create and view academic profiles used for notice eligibility.
+              </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="student-toggle-button"
-            onClick={() => {
-              setShowStudentForm((current) => !current);
-              setStudentMessage("");
-              setError("");
-            }}
-          >
-            {showStudentForm ? "× Close" : "＋ Create Student"}
-          </button>
+          <div className="student-management-actions">
+            <button
+              type="button"
+              className="student-view-button"
+              onClick={() => setShowStudentList((current) => !current)}
+            >
+              {showStudentList
+                ? "× Hide Students"
+                : `👥 View All Students (${students.length})`}
+            </button>
+
+            <button
+              type="button"
+              className="student-toggle-button"
+              onClick={() => {
+                setShowStudentForm((current) => !current);
+                setStudentMessage("");
+                setError("");
+              }}
+            >
+              {showStudentForm ? "× Close" : "＋ Create Student"}
+            </button>
+          </div>
         </section>
 
         {showStudentForm && (
@@ -419,62 +434,66 @@ export default function AdminDashboard() {
         )}
         {/* CURRENT STUDENTS */}
 
-        <section className="current-students-panel">
-          <div className="current-students-header">
-            <div>
-              <span className="section-kicker">CURRENT STUDENTS</span>
+        {showStudentList && (
+          <section className="current-students-panel">
+            <div className="current-students-header">
+              <div>
+                <span className="section-kicker">CURRENT STUDENTS</span>
 
-              <h2>Registered student profiles</h2>
+                <h2>Registered student profiles</h2>
 
-              <p>Academic profiles used for eligibility and notice routing.</p>
+                <p>
+                  Academic profiles used for eligibility and notice routing.
+                </p>
+              </div>
+
+              <div className="current-students-count">
+                {students.length}{" "}
+                {students.length === 1 ? "student" : "students"}
+              </div>
             </div>
 
-            <div className="current-students-count">
-              {students.length} {students.length === 1 ? "student" : "students"}
+            <div className="student-privacy-note">
+              🔒 Student preferences are private and are not visible to
+              administrators.
             </div>
-          </div>
 
-          <div className="student-privacy-note">
-            🔒 Student preferences are private and are not visible to
-            administrators.
-          </div>
+            {studentsLoading ? (
+              <div className="students-empty">
+                <span className="spinner" />
+                Loading students...
+              </div>
+            ) : students.length === 0 ? (
+              <div className="students-empty">
+                <span>👥</span>
+                <p>No students have been registered yet.</p>
+              </div>
+            ) : (
+              <div className="students-list">
+                {students.map((student) => (
+                  <div className="student-list-item" key={student.id}>
+                    <div className="student-list-avatar">👤</div>
 
-          {studentsLoading ? (
-            <div className="students-empty">
-              <span className="spinner" />
-              Loading students...
-            </div>
-          ) : students.length === 0 ? (
-            <div className="students-empty">
-              <span>👥</span>
-              <p>No students have been registered yet.</p>
-            </div>
-          ) : (
-            <div className="students-list">
-              {students.map((student) => (
-                <div className="student-list-item" key={student.id}>
-                  <div className="student-list-avatar">👤</div>
+                    <div className="student-list-main">
+                      <strong>{student.name}</strong>
+                      <span>{student.id}</span>
+                    </div>
 
-                  <div className="student-list-main">
-                    <strong>{student.name}</strong>
+                    <div className="student-list-detail">
+                      <span>YEAR</span>
+                      <strong>{formatYear(student.year)}</strong>
+                    </div>
 
-                    <span>{student.id}</span>
+                    <div className="student-list-detail">
+                      <span>BRANCH</span>
+                      <strong>{student.branch}</strong>
+                    </div>
                   </div>
-
-                  <div className="student-list-detail">
-                    <span>YEAR</span>
-                    <strong>{formatYear(student.year)}</strong>
-                  </div>
-
-                  <div className="student-list-detail">
-                    <span>BRANCH</span>
-                    <strong>{student.branch}</strong>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* UPLOAD */}
         <section className="upload-panel">

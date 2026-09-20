@@ -1430,6 +1430,39 @@
 .students-empty p {
   margin: 0;
 }
+.student-management-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.student-view-button {
+  padding: 10px 16px;
+
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.035);
+
+  color: #c4b5fd;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.student-view-button:hover {
+  background: rgba(139, 92, 246, 0.10);
+  border-color: rgba(167, 139, 250, 0.4);
+  transform: translateY(-1px);
+}
 
 @media (max-width: 650px) {
   .current-students-header {
@@ -1475,5 +1508,29 @@
 
   .notice-history-panel {
     padding: 18px;
+  }
+}
+
+@media (max-width: 650px) {
+  .student-management-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .student-management-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .student-management-actions button {
+    width: 100%;
+  }
+
+  .student-create-form .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .student-create-heading {
+    flex-direction: column;
   }
 }
