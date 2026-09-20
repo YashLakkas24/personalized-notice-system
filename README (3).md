@@ -78,7 +78,7 @@ The administrator publishes a notice once. Everything downstream — understandi
 
 ### Student — Relevant to You
 
-![Relevant to You](docs/screenshots/relevant-to-you.png)
+![Relevant to You](docs/screenshots/relevant-notices.png)
 
 ### Student — All Notices
 
