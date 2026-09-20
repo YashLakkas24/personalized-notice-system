@@ -684,7 +684,7 @@ def get_notifications(
                 "relevance_score": notification.relevance_score,
                 "reason": notification.reason,
                 "status": notification.status,
-                "created_at": notice.created_at,
+                "created_at": notification.created_at,
             }
         )
 
