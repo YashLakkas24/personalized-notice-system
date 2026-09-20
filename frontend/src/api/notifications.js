@@ -1,5 +1,17 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
+function getStudentToken() {
+  const auth = sessionStorage.getItem("studentAuth");
+
+  if (!auth) return null;
+
+  try {
+    return JSON.parse(auth).token;
+  } catch {
+    return null;
+  }
+}
+
 export async function getAllNotices() {
   const response = await fetch(`${API_BASE}/api/notices`);
 
@@ -28,8 +40,17 @@ export async function createStudent(student) {
 }
 
 export async function getStudentNotifications(studentId) {
+  const token = getStudentToken();
+
   const response = await fetch(
     `${API_BASE}/api/student/${studentId}/notifications`,
+    {
+      headers: token
+        ? {
+            "X-Student-Token": token,
+          }
+        : {},
+    },
   );
 
   if (!response.ok) {
@@ -40,10 +61,17 @@ export async function getStudentNotifications(studentId) {
 }
 
 export async function markNotificationRead(studentId, notificationId) {
+  const token = getStudentToken();
+
   const response = await fetch(
     `${API_BASE}/api/student/${studentId}/notifications/${notificationId}/read`,
     {
       method: "PATCH",
+      headers: token
+        ? {
+            "X-Student-Token": token,
+          }
+        : {},
     },
   );
 

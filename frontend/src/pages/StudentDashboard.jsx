@@ -64,6 +64,13 @@ export default function StudentDashboard({ studentId }) {
       setAllNotices(all.notices || []);
     } catch (err) {
       console.error(err);
+
+      if (err.message.includes("401") || err.message.includes("403")) {
+        sessionStorage.removeItem("studentAuth");
+        window.location.replace("/student-login");
+        return;
+      }
+
       setError("Unable to load your notices.");
     } finally {
       setLoading(false);

@@ -15,6 +15,8 @@ class Student(Base):
 
     branch = Column(String, nullable=False)
 
+    password = Column(String, nullable=False, default="student123")
+
     preferences = Column(Text, nullable=False, default="")
 
     preference_embedding = Column(JSON, nullable=True)

@@ -36,6 +36,14 @@ export default function StudentLogin() {
         throw new Error(message);
       }
 
+      sessionStorage.setItem(
+        "studentAuth",
+        JSON.stringify({
+          studentId: data.student.id,
+          token: data.token,
+        }),
+      );
+
       window.location.href = `/student/${data.student.id}`;
     } catch (err) {
       console.error("LOGIN ERROR:", err);

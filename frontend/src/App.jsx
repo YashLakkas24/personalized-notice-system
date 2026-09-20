@@ -25,9 +25,22 @@ export default function App() {
   if (path.startsWith("/student/")) {
     const studentId = path.split("/student/")[1];
 
+    let auth = null;
+
+    try {
+      auth = JSON.parse(sessionStorage.getItem("studentAuth"));
+    } catch {
+      auth = null;
+    }
+
+    if (!auth || auth.studentId !== studentId || !auth.token) {
+      window.location.replace("/student-login");
+      return null;
+    }
+
     return <StudentDashboard studentId={studentId} />;
-  } 
-  
+  }
+
   return (
     <main className="portal-page">
       <div className="portal-container">

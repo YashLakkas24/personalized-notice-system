@@ -15,6 +15,8 @@ from typing import List
 from io import BytesIO
 import pytesseract
 from PIL import Image
+import secrets
+from fastapi import Header
 
 from pypdf import PdfReader
 
@@ -29,6 +31,9 @@ from app.services.embedding_service import (
 )
 from app.models.notification import Notification
 from app.services.notice_workflow import process_notice_workflow
+import base64
+import hashlib
+import hmac
 import os
 import uuid
 from fastapi.staticfiles import StaticFiles
@@ -83,6 +88,66 @@ class StudentLogin(BaseModel):
 
 class StudentPreferencesUpdate(BaseModel):
     preferences: str
+
+
+STUDENT_AUTH_SECRET = os.getenv(
+    "STUDENT_AUTH_SECRET",
+    "campusnotice-demo-secret-change-me",
+)
+
+
+def create_student_token(student_id: str) -> str:
+    encoded_id = base64.urlsafe_b64encode(student_id.encode()).decode().rstrip("=")
+
+    signature = hmac.new(
+        STUDENT_AUTH_SECRET.encode(),
+        student_id.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return f"{encoded_id}.{signature}"
+
+
+def verify_student_session(
+    student_id: str,
+    token: str | None,
+):
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Student authentication required.",
+        )
+
+    try:
+        encoded_id, signature = token.split(".", 1)
+
+        padding = "=" * (-len(encoded_id) % 4)
+
+        authenticated_student = base64.urlsafe_b64decode(encoded_id + padding).decode()
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid student session.",
+        )
+
+    expected_signature = hmac.new(
+        STUDENT_AUTH_SECRET.encode(),
+        authenticated_student.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(signature, expected_signature):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid student session.",
+        )
+
+    if authenticated_student != student_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not authorized to access this student account.",
+        )
 
 
 def process_notice_in_background(
@@ -141,8 +206,14 @@ def student_login(
             detail="Student not found.",
         )
 
+    if login_data.password != student.password:
+        raise HTTPException(status_code=401, detail="Invalid student ID or password.")
+
+    token = create_student_token(student.id)
+
     return {
         "message": "Login successful",
+        "token": token,
         "student": {
             "id": student.id,
             "name": student.name,
@@ -405,7 +476,14 @@ def create_student(
 
 
 @app.get("/api/student/{student_id}/profile")
-def get_student_profile(student_id: str, db: Session = Depends(get_db)):
+def get_student_profile(
+    student_id: str,
+    x_student_token: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+
+    verify_student_session(student_id, x_student_token)
+
     student = db.query(Student).filter(Student.id == student_id).first()
 
     if not student:
@@ -424,8 +502,11 @@ def get_student_profile(student_id: str, db: Session = Depends(get_db)):
 def update_student_profile(
     student_id: str,
     profile: StudentPreferencesUpdate,
+    x_student_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ):
+    verify_student_session(student_id, x_student_token)
+
     student = db.query(Student).filter(Student.id == student_id).first()
 
     if not student:
@@ -655,8 +736,11 @@ def get_all_notices(
 @app.get("/api/student/{student_id}/notifications")
 def get_notifications(
     student_id: str,
+    x_student_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ):
+    verify_student_session(student_id, x_student_token)
+
     notifications = (
         db.query(Notification)
         .filter(Notification.student_id == student_id)
@@ -704,8 +788,11 @@ def get_notifications(
 def mark_notification_read(
     student_id: str,
     notification_id: str,
+    x_student_token: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ):
+    verify_student_session(student_id, x_student_token)
+
     notification = (
         db.query(Notification)
         .filter(
