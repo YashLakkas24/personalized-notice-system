@@ -11,8 +11,7 @@ CampusNotice.AI turns a traditional college notice board into a personalized inf
 
 <!--
 DEMO VIDEO: 3–5 minute walkthrough covering the flow in "Demo Flow" below.
-Replace this comment with a link once recorded, e.g.:
-📺 [Watch the demo](https://your-video-link)
+https://youtu.be/t8KJMhWMc6U
 -->
 
 ---
