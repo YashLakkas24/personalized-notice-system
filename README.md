@@ -9,10 +9,8 @@ CampusNotice.AI turns a traditional college notice board into a personalized inf
 
 *The personalized feed surfaces notices relevant to the student's interests and eligibility, with an explanation for each recommendation.*
 
-<!--
-DEMO VIDEO: 3–5 minute walkthrough covering the flow in "Demo Flow" below.
+
 https://youtu.be/t8KJMhWMc6U
--->
 
 ---
 
